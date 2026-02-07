@@ -1,14 +1,16 @@
 import { useState, useEffect } from 'react';
+import { createPortal } from 'react-dom';
 import { getGameImportance } from '../../utils/game-importance';
 import { GameCardExpanded } from './GameCardExpanded';
 import MomentumSparkline from './MomentumSparkline';
 import { espnAPI } from '../../utils/api-client';
+import { mockOdds } from '../../utils/mock-odds';
 
-export const GameCard = ({ game, league = 'nba', onAddToParlay, isInParlay }) => {
+export const GameCard = ({ game, league = 'nba' }) => {
   const [isExpanded, setIsExpanded] = useState(false);
   const [summary, setSummary] = useState(null);
-  const [isFavorited, setIsFavorited] = useState(false);
-  
+  const [coreOdds, setCoreOdds] = useState(null);
+
   const competition = game.competitions?.[0];
   if (!competition) return null;
 
@@ -16,13 +18,35 @@ export const GameCard = ({ game, league = 'nba', onAddToParlay, isInParlay }) =>
   const [away, home] = competitors || [];
 
   const isLive = status?.type?.state === 'in';
-  const statusDetail = status?.type?.shortDetail || 'TBD';
-  
+  const isOver = status?.type?.state === 'post';
+  // For pre-game, format game time in user's local timezone (ESPN sends UTC in game.date)
+  const isPre = status?.type?.state === 'pre';
+  const statusDetail = isPre && game.date
+    ? new Date(game.date).toLocaleTimeString([], { hour: 'numeric', minute: '2-digit' })
+    : (status?.type?.shortDetail || 'TBD');
+
+  // Fetch summary for live games + poll every 10s
   useEffect(() => {
-    if (isLive) {
-      espnAPI.getGameSummary(league, game.id).then(setSummary);
-    }
+    if (!isLive) return;
+    espnAPI.getGameSummary(league, game.id).then(setSummary);
+    const interval = setInterval(() => {
+      espnAPI.getGameSummary(league, game.id).then(setSummary).catch(() => {});
+    }, 10000);
+    return () => clearInterval(interval);
   }, [isLive, game.id, league]);
+
+  // Fetch core odds when scoreboard doesn't include them + poll for live games
+  const scoreboardOdds = competition.odds?.[0];
+  const needsCoreOdds = scoreboardOdds?.spread == null && scoreboardOdds?.overUnder == null;
+  useEffect(() => {
+    if (!needsCoreOdds) return;
+    espnAPI.getCoreOdds(league, game.id).then(setCoreOdds).catch(() => {});
+    if (!isLive) return;
+    const interval = setInterval(() => {
+      espnAPI.getCoreOdds(league, game.id).then(setCoreOdds).catch(() => {});
+    }, 10000);
+    return () => clearInterval(interval);
+  }, [needsCoreOdds, isLive, game.id, league]);
 
   const { score: importanceScore, reason } = getGameImportance(game, league);
 
@@ -47,20 +71,11 @@ export const GameCard = ({ game, league = 'nba', onAddToParlay, isInParlay }) =>
         <div className="p-6" onClick={handleExpandClick}>
           <div className="flex justify-between items-start mb-5">
             <div className="flex flex-col gap-1">
-               <span className="text-[10px] text-slate-400 font-semibold uppercase tracking-wider letter-spacing-1">{statusDetail}</span>
+               <span className="text-[13px] text-slate-400 font-semibold uppercase tracking-wider letter-spacing-1">{statusDetail}</span>
                {importanceScore >= 5 && (
-                 <span className="text-[9px] text-blue-300 font-semibold uppercase tracking-wide">✨ {reason}</span>
+                 <span className="text-[11px] text-blue-300 font-semibold uppercase tracking-wide">✨ {reason}</span>
                )}
             </div>
-            <button
-              onClick={(e) => {
-                e.stopPropagation();
-                setIsFavorited(!isFavorited);
-              }}
-              className="text-slate-400 hover:text-yellow-400 transition-colors duration-200"
-            >
-              {isFavorited ? '⭐' : '☆'}
-            </button>
             {isLive && <MomentumSparkline plays={summary?.plays} />}
           </div>
           
@@ -71,62 +86,106 @@ export const GameCard = ({ game, league = 'nba', onAddToParlay, isInParlay }) =>
                   className="flex items-center gap-3 flex-1"
                 >
                    <div className="relative">
-                     <img src={team?.team?.logo} className="w-9 h-9 object-contain filter drop-shadow-lg" />
+                     <img src={team?.team?.logo} className="w-11 h-11 object-contain filter drop-shadow-lg" />
                    </div>
                    <div className="flex flex-col min-w-0">
-                      <span className="text-sm font-bold text-white uppercase tracking-tight leading-tight">{team?.team?.abbreviation}</span>
-                      <span className="text-[9px] text-slate-400 font-medium">{team?.records?.[0]?.summary}</span>
+                      <span className="text-base font-bold text-white uppercase tracking-tight leading-tight">{team?.team?.abbreviation}</span>
+                      <span className="text-[11px] text-slate-400 font-medium">{team?.records?.[0]?.summary}</span>
                    </div>
                 </div>
-                <div className={`text-2xl font-bold tabular-nums ml-3 ${team?.team?.id === home?.team?.id ? 'text-blue-400' : 'text-slate-100'}`}>
+                <div className={`text-3xl font-bold tabular-nums ml-3 ${team?.team?.id === home?.team?.id ? 'text-blue-400' : 'text-slate-100'}`}>
                    {team?.score}
                 </div>
               </div>
             ))}
           </div>
 
-          {/* Betting odds placeholder - ready for integration */}
-          <div className="mt-5 pt-4 border-t border-white/10">
-            <div className="text-[10px] text-slate-500 uppercase font-semibold tracking-wider mb-2">Vegas Line</div>
-            <div className="flex justify-between items-center text-xs">
-              <div className="text-slate-400">Moneyline • Spread • Total</div>
-              <div className="flex gap-2">
-                <button 
-                  onClick={(e) => {
-                    e.stopPropagation();
-                    if (onAddToParlay) {
-                      onAddToParlay(game);
-                    }
-                  }}
-                  className={`transition-colors font-medium ${
-                    isInParlay
-                      ? 'text-green-400 hover:text-green-300'
-                      : 'text-slate-500 hover:text-blue-400'
-                  }`}
-                >
-                  {isInParlay ? '✓ Added' : 'Parlay'}
-                </button>
-                <button 
-                  onClick={(e) => {
-                    e.stopPropagation();
-                    setIsExpanded(true);
-                  }}
-                  className="text-blue-400 hover:text-blue-300 transition-colors font-medium"
-                >
-                  View →
-                </button>
+          {/* Vegas Line */}
+          {(() => {
+            // Use scoreboard odds if available, otherwise core odds
+            const sbOdds = competition.odds?.[0];
+            const odds = (sbOdds?.spread != null || sbOdds?.overUnder != null)
+              ? {
+                  spread: sbOdds.spread,
+                  overUnder: sbOdds.overUnder,
+                  moneylineHome: sbOdds?.moneyline?.home?.close?.odds || null,
+                  moneylineAway: sbOdds?.moneyline?.away?.close?.odds || null,
+                  source: 'espn',
+                }
+              : coreOdds;
+
+            if (!odds) {
+              return (
+                <div className="mt-5 pt-4 border-t border-white/10">
+                  <div className="text-[11px] text-slate-600 text-center py-1">Odds not available</div>
+                </div>
+              );
+            }
+
+            const displayOdds = mockOdds.enrichOdds(
+              odds,
+              home?.team?.shortDisplayName, away?.team?.shortDisplayName,
+              home?.records?.[0]?.summary, away?.records?.[0]?.summary
+            );
+            const isLiveOdds = coreOdds?.isLive && isLive;
+            return (
+              <div className="mt-5 pt-4 border-t border-white/10">
+                <div className="text-[13px] text-slate-500 uppercase font-semibold tracking-wider mb-2">
+                  {isLiveOdds ? 'Live Line' : 'Vegas Line'}
+                </div>
+                <div className="grid grid-cols-3 gap-3 text-center">
+                  <div>
+                    <div className="text-[11px] text-slate-600 font-medium mb-1">Spread</div>
+                    <div className="text-base font-bold text-white tabular-nums leading-tight">
+                      {displayOdds.spread > 0 ? `+${displayOdds.spread}` : displayOdds.spread}
+                      {displayOdds.spreadOddsHome && <span className="text-[10px] font-medium text-slate-500 ml-1">({mockOdds.formatOdds(displayOdds.spreadOddsHome)})</span>}
+                    </div>
+                    <div className="text-[10px] text-slate-500 mt-1">{displayOdds.spread <= 0 ? home?.team?.abbreviation : away?.team?.abbreviation}</div>
+                  </div>
+                  <div>
+                    <div className="text-[11px] text-slate-600 font-medium mb-1">Total</div>
+                    <div className="text-base font-bold text-white tabular-nums leading-tight">{displayOdds.overUnder}</div>
+                    <div className="text-[10px] text-slate-500 mt-1 tabular-nums">
+                      {displayOdds.overOdds && displayOdds.underOdds
+                        ? `o${mockOdds.formatOdds(displayOdds.overOdds)} / u${mockOdds.formatOdds(displayOdds.underOdds)}`
+                        : 'O/U'}
+                    </div>
+                  </div>
+                  <div>
+                    <div className="text-[11px] text-slate-600 font-medium mb-1">ML</div>
+                    <div className="space-y-0.5">
+                      <div className="flex items-baseline justify-center gap-1.5">
+                        <span className="text-[10px] text-slate-500 w-8 text-right">{away?.team?.abbreviation}</span>
+                        <span className="text-sm font-bold text-white tabular-nums">{mockOdds.formatOdds(displayOdds.moneylineAway)}</span>
+                      </div>
+                      <div className="flex items-baseline justify-center gap-1.5">
+                        <span className="text-[10px] text-slate-500 w-8 text-right">{home?.team?.abbreviation}</span>
+                        <span className="text-sm font-bold text-white tabular-nums">{mockOdds.formatOdds(displayOdds.moneylineHome)}</span>
+                      </div>
+                    </div>
+                  </div>
+                </div>
+                {/* Line Movement */}
+                {displayOdds.openSpread != null && displayOdds.openSpread !== displayOdds.spread && (
+                  <div className="mt-2 pt-2 border-t border-white/5 text-xs text-slate-500 text-center tabular-nums">
+                    Opened {displayOdds.openSpread > 0 ? `+${displayOdds.openSpread}` : displayOdds.openSpread}
+                    {' → '}
+                    <span className="text-amber-400">{displayOdds.spread > 0 ? `+${displayOdds.spread}` : displayOdds.spread}</span>
+                  </div>
+                )}
               </div>
-            </div>
-          </div>
+            );
+          })()}
         </div>
       </div>
 
-      {isExpanded && (
-        <GameCardExpanded 
+      {isExpanded && createPortal(
+        <GameCardExpanded
           game={game}
           league={league}
-          onClose={handleClose} 
-        />
+          onClose={handleClose}
+        />,
+        document.body
       )}
     </>
   );

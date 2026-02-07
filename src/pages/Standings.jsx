@@ -1,19 +1,14 @@
-import { useState } from 'react';
 import { PageWrapper } from '../components/layout/PageWrapper';
 import { StandingsTable } from '../components/standings/StandingsTable';
-import { ConferenceFilter } from '../components/standings/ConferenceFilter';
-import { Button } from '../components/ui/Button';
 import { Skeleton } from '../components/ui/Skeleton';
 import { useStandings } from '../hooks/useBasketballData';
 
-export const Standings = () => {
-  const [league, setLeague] = useState('nba');
-  const [nbaConference, setNbaConference] = useState('eastern');
-  const [ncaamConference, setNcaamConference] = useState('all');
+export const Standings = ({ league, nbaConference, ncaamConference }) => {
+  const isNcaam = league === 'mens-college-basketball';
 
   const { data, loading, error } = useStandings(
-    league,
-    league === 'ncaam' ? ncaamConference : null
+    isNcaam ? 'ncaam' : 'nba',
+    isNcaam ? ncaamConference : null
   );
 
   const renderNBAStandings = () => {
@@ -37,37 +32,17 @@ export const Standings = () => {
     }
 
     const standings = data?.children || [];
-    const easternConf = standings.find((s) => 
+    const easternConf = standings.find((s) =>
       s.name?.toLowerCase().includes('eastern') || s.abbreviation === 'EAST'
     );
-    const westernConf = standings.find((s) => 
+    const westernConf = standings.find((s) =>
       s.name?.toLowerCase().includes('western') || s.abbreviation === 'WEST'
     );
 
     const selectedConf = nbaConference === 'eastern' ? easternConf : westernConf;
     const teams = selectedConf?.standings?.entries || [];
 
-    return (
-      <div>
-        <div className="flex gap-3 mb-6">
-          <Button
-            variant={nbaConference === 'eastern' ? 'primary' : 'outline'}
-            size="sm"
-            onClick={() => setNbaConference('eastern')}
-          >
-            Eastern
-          </Button>
-          <Button
-            variant={nbaConference === 'western' ? 'primary' : 'outline'}
-            size="sm"
-            onClick={() => setNbaConference('western')}
-          >
-            Western
-          </Button>
-        </div>
-        <StandingsTable teams={teams} showPlayoffLines={true} />
-      </div>
-    );
+    return <StandingsTable teams={teams} showPlayoffLines={true} />;
   };
 
   const renderNCAAMRankings = () => {
@@ -84,7 +59,6 @@ export const Standings = () => {
     if (error) {
       return (
         <div className="bg-white/5 backdrop-blur-xl rounded-2xl border-2 border-dashed border-red-500/30 p-12 text-center">
-          <div className="text-4xl mb-3">⚠️</div>
           <p className="text-lg font-semibold text-red-400 mb-1">Error loading rankings</p>
           <p className="text-sm text-white/60">{error}</p>
         </div>
@@ -99,11 +73,7 @@ export const Standings = () => {
 
       return (
         <div>
-          <ConferenceFilter 
-            selectedConference={ncaamConference}
-            onConferenceChange={setNcaamConference}
-          />
-          <h3 className="text-lg font-bold text-[#1E293B] mb-4">AP Top 25</h3>
+          <h3 className="text-lg font-bold text-slate-100 mb-4">AP Top 25</h3>
           <StandingsTable teams={teams} showRank={true} />
         </div>
       );
@@ -116,11 +86,7 @@ export const Standings = () => {
 
     return (
       <div>
-        <ConferenceFilter 
-          selectedConference={ncaamConference}
-          onConferenceChange={setNcaamConference}
-        />
-        <h3 className="text-lg font-bold text-[#1E293B] mb-4">
+        <h3 className="text-lg font-bold text-slate-100 mb-4">
           {selectedConf?.name || 'Conference Standings'}
         </h3>
         <StandingsTable teams={teams} showPlayoffLines={false} />
@@ -130,24 +96,7 @@ export const Standings = () => {
 
   return (
     <PageWrapper title="Standings & Rankings">
-      <div className="flex gap-3 mb-8">
-        <Button
-          variant={league === 'nba' ? 'primary' : 'outline'}
-          size="sm"
-          onClick={() => setLeague('nba')}
-        >
-          NBA
-        </Button>
-        <Button
-          variant={league === 'ncaam' ? 'primary' : 'outline'}
-          size="sm"
-          onClick={() => setLeague('ncaam')}
-        >
-          NCAAM
-        </Button>
-      </div>
-
-      {league === 'nba' ? renderNBAStandings() : renderNCAAMRankings()}
+      {isNcaam ? renderNCAAMRankings() : renderNBAStandings()}
     </PageWrapper>
   );
 };

@@ -63,13 +63,13 @@ export const mockOdds = {
       ? [favorite, underdog]
       : [underdog, favorite];
     
-    // Spread (roughly: point differential × 1.1 for vigorish)
-    const spreadValue = Math.round(pointDifferential * 11) / 10;
-    
-    // Over/Under (simplified: base 210, adjust ±5 for pace/defense)
+    // Spread — round to nearest 0.5 like real Vegas lines
+    const spreadValue = Math.round(pointDifferential * 2) / 2;
+
+    // Over/Under — round to nearest 0.5
     const baseTotal = 210;
-    const paceFactor = (homeWins + awayWins) / 20; // Teams that win = fast pace
-    const total = Math.round(baseTotal + (paceFactor * 5));
+    const paceFactor = (homeWins + awayWins) / 20;
+    const total = Math.round((baseTotal + paceFactor * 5) * 2) / 2;
     
     return {
       moneylineHome: homeML,
@@ -77,25 +77,57 @@ export const mockOdds = {
       moneylineProbHome: calculateImpliedProbability(homeML),
       moneylineProbAway: calculateImpliedProbability(awayML),
       spread: spreadValue,
-      spreadDisplay: spreadDisplay,
+      spreadDisplay: spreadValue > 0 ? `+${spreadValue}` : `${spreadValue}`,
       overUnder: total,
       source: 'mock-data', // Indicates this is demo/MVP
     };
   },
 
-  // Parse existing ESPN odds or fill with mock
+  // Use real ESPN data where available, mock only what's missing
   enrichOdds: (espnOdds, homeTeam, awayTeam, homeRecord, awayRecord) => {
-    // If ESPN odds exist, use them
-    if (espnOdds?.moneylineHome && espnOdds.moneylineHome !== 'N/A') {
-      return {
-        ...espnOdds,
-        moneylineProbHome: calculateImpliedProbability(espnOdds.moneylineHome),
-        moneylineProbAway: calculateImpliedProbability(espnOdds.moneylineAway),
-      };
+    const mock = mockOdds.generateGameOdds(homeTeam, awayTeam, homeRecord, awayRecord);
+    const hasSpread = espnOdds?.spread != null;
+    const hasOU = espnOdds?.overUnder != null;
+    const hasML = espnOdds?.moneylineHome && espnOdds.moneylineHome !== 'N/A';
+
+    // If ESPN has nothing, fully mock
+    if (!hasSpread && !hasOU && !hasML) return mock;
+
+    // Blend: use ESPN where available, mock the rest
+    const spread = hasSpread ? parseFloat(espnOdds.spread) : mock.spread;
+    const overUnder = hasOU ? parseFloat(espnOdds.overUnder) : mock.overUnder;
+
+    // Derive moneyline from ESPN spread if no ML data
+    let moneylineHome, moneylineAway;
+    if (hasML) {
+      moneylineHome = espnOdds.moneylineHome;
+      moneylineAway = espnOdds.moneylineAway;
+    } else {
+      const { favorite, underdog } = generateMoneyline(Math.abs(spread));
+      [moneylineHome, moneylineAway] = spread <= 0
+        ? [favorite, underdog]
+        : [underdog, favorite];
     }
-    
-    // Otherwise generate mock
-    return mockOdds.generateGameOdds(homeTeam, awayTeam, homeRecord, awayRecord);
+
+    return {
+      moneylineHome,
+      moneylineAway,
+      moneylineProbHome: calculateImpliedProbability(moneylineHome),
+      moneylineProbAway: calculateImpliedProbability(moneylineAway),
+      spread,
+      spreadDisplay: spread > 0 ? `+${spread}` : `${spread}`,
+      overUnder,
+      // Pass through juice and line movement from core odds
+      spreadOddsHome: espnOdds?.spreadOddsHome,
+      spreadOddsAway: espnOdds?.spreadOddsAway,
+      overOdds: espnOdds?.overOdds,
+      underOdds: espnOdds?.underOdds,
+      openSpread: espnOdds?.openSpread,
+      openMoneylineHome: espnOdds?.openMoneylineHome,
+      openMoneylineAway: espnOdds?.openMoneylineAway,
+      isLive: espnOdds?.isLive || false,
+      source: (hasSpread || hasOU) ? 'espn' : 'mock-data',
+    };
   },
 
   // Calculate parlay payout (for future feature)

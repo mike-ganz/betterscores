@@ -10,6 +10,12 @@ import CommandPalette from './components/ui/CommandPalette';
 function App() {
   const [isPaletteOpen, setIsPaletteOpen] = useState(false);
 
+  // Shared filter state
+  const [league, setLeague] = useState('nba');
+  const [selectedDate, setSelectedDate] = useState(new Date());
+  const [nbaConference, setNbaConference] = useState('eastern');
+  const [ncaamConference, setNcaamConference] = useState('all');
+
   useEffect(() => {
     const handleKeyDown = (e) => {
       if (e.key === 'k' && (e.metaKey || e.ctrlKey)) {
@@ -24,15 +30,30 @@ function App() {
   return (
     <Router>
       <div className="min-h-screen bg-transparent">
-        <Navigation />
-        <CommandPalette 
-          isOpen={isPaletteOpen} 
-          onClose={() => setIsPaletteOpen(false)} 
-          onDateChange={() => {}} // Home page handles its own state for now
+        <Navigation
+          league={league}
+          onLeagueChange={setLeague}
+          selectedDate={selectedDate}
+          onDateChange={setSelectedDate}
+          nbaConference={nbaConference}
+          onNbaConferenceChange={setNbaConference}
+          ncaamConference={ncaamConference}
+          onNcaamConferenceChange={setNcaamConference}
+        />
+        <CommandPalette
+          isOpen={isPaletteOpen}
+          onClose={() => setIsPaletteOpen(false)}
+          onDateChange={setSelectedDate}
         />
         <Routes>
-          <Route path="/" element={<Home />} />
-          <Route path="/standings" element={<Standings />} />
+          <Route path="/" element={<Home league={league} selectedDate={selectedDate} />} />
+          <Route path="/standings" element={
+            <Standings
+              league={league}
+              nbaConference={nbaConference}
+              ncaamConference={ncaamConference}
+            />
+          } />
           <Route path="/player/:id" element={<PlayerDetail />} />
           <Route path="/team/:league/:id" element={<TeamPage />} />
         </Routes>

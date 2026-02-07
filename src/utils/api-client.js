@@ -1,13 +1,61 @@
 const ESPN_BASE = 'https://site.api.espn.com/apis';
 
+// Parse the core odds API response into a normalized object
+// When live odds exist, use them as primary (they reflect current game state)
+function parseCoreOdds(data) {
+  const items = data?.items || [];
+  if (!items.length) return null;
+
+  const pregame = items.find(i => i.provider?.name === 'Draft Kings') || items[0];
+  const live = items.find(i => i.provider?.name?.includes('Live Odds'));
+
+  // Use live odds when available, fall back to pre-game
+  const primary = live || pregame;
+  if (!primary) return null;
+
+  // Opening line (from pregame entry, or primary's open)
+  const opener = pregame || primary;
+  const openSpread = opener?.open?.over
+    ? opener?.homeTeamOdds?.open?.pointSpread?.alternateDisplayValue
+    : null;
+  const openSpreadNum = openSpread ? parseFloat(openSpread) : null;
+  const openOU = opener?.open?.over
+    ? null // O/U open isn't in a simple field, skip for now
+    : null;
+
+  return {
+    spread: primary.spread,
+    overUnder: primary.overUnder,
+    details: primary.details,
+    moneylineHome: primary.homeTeamOdds?.moneyLine,
+    moneylineAway: primary.awayTeamOdds?.moneyLine,
+    // Juice
+    spreadOddsHome: primary.homeTeamOdds?.spreadOdds,
+    spreadOddsAway: primary.awayTeamOdds?.spreadOdds,
+    overOdds: primary.overOdds,
+    underOdds: primary.underOdds,
+    // Line movement (pregame open vs current)
+    openSpread: pregame?.homeTeamOdds?.open?.pointSpread
+      ? parseFloat(pregame.homeTeamOdds.open.pointSpread.alternateDisplayValue)
+      : null,
+    openMoneylineHome: pregame?.homeTeamOdds?.open?.moneyLine
+      ? parseInt(pregame.homeTeamOdds.open.moneyLine.alternateDisplayValue)
+      : null,
+    openMoneylineAway: pregame?.awayTeamOdds?.open?.moneyLine
+      ? parseInt(pregame.awayTeamOdds.open.moneyLine.alternateDisplayValue)
+      : null,
+    isLive: !!live,
+    source: 'espn-core',
+  };
+}
+
 export const espnAPI = {
   // NBA Endpoints
   getNBAScoreboard: async (date) => {
-    console.log('Fetching NBA Scoreboard for date:', date);
-    const url = date 
+    const url = date
       ? `${ESPN_BASE}/site/v2/sports/basketball/nba/scoreboard?dates=${date}`
       : `${ESPN_BASE}/site/v2/sports/basketball/nba/scoreboard`;
-    const response = await fetch(url);
+    const response = await fetch(url, { cache: 'no-store' });
     return response.json();
   },
 
@@ -21,7 +69,7 @@ export const espnAPI = {
     const url = date
       ? `${ESPN_BASE}/site/v2/sports/basketball/mens-college-basketball/scoreboard?dates=${date}`
       : `${ESPN_BASE}/site/v2/sports/basketball/mens-college-basketball/scoreboard`;
-    const response = await fetch(url);
+    const response = await fetch(url, { cache: 'no-store' });
     return response.json();
   },
 
@@ -84,19 +132,23 @@ export const espnAPI = {
     return response.json();
   },
 
-  getGameOdds: async (league, gameId) => {
+  // Core odds endpoint — works for all game states (pre, live, post)
+  getCoreOdds: async (league, gameId) => {
     const leaguePath = league === 'nba' ? 'nba' : 'mens-college-basketball';
-    const response = await fetch(
-      `${ESPN_BASE}/site/v2/sports/basketball/${leaguePath}/scoreboard/${gameId}/odds`
-    );
-    return response.json();
+    const url = `https://sports.core.api.espn.com/v2/sports/basketball/leagues/${leaguePath}/events/${gameId}/competitions/${gameId}/odds?_t=${Date.now()}`;
+    const response = await fetch(url, { cache: 'no-store' });
+    const data = await response.json();
+    const parsed = parseCoreOdds(data);
+    console.log(`[odds] ${gameId} spread=${parsed?.spread} ML=${parsed?.moneylineHome}/${parsed?.moneylineAway} live=${parsed?.isLive}`);
+    return parsed;
   },
 
   // Live game box score
   getGameSummary: async (league, gameId) => {
     const leaguePath = league === 'nba' ? 'nba' : 'mens-college-basketball';
     const response = await fetch(
-      `${ESPN_BASE}/site/v2/sports/basketball/${leaguePath}/summary?event=${gameId}`
+      `${ESPN_BASE}/site/v2/sports/basketball/${leaguePath}/summary?event=${gameId}&_t=${Date.now()}`,
+      { cache: 'no-store' }
     );
     return response.json();
   },

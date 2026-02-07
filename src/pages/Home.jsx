@@ -1,6 +1,5 @@
 import { useState } from 'react';
 import { PageWrapper } from '../components/layout/PageWrapper';
-import DatePicker from '../components/scores/DatePicker';
 import { GameCard } from '../components/scores/GameCard';
 import { GameCardSkeleton } from '../components/ui/Skeleton';
 import { ParlayBuilder } from '../components/scores/ParlayBuilder';
@@ -8,19 +7,16 @@ import { useScoreboard } from '../hooks/useBasketballData';
 import { sortGamesByImportance } from '../utils/game-importance';
 import { format } from 'date-fns';
 
-export const Home = () => {
-  // Scoreboard with smart polling optimization
-  const [selectedDate, setSelectedDate] = useState(new Date());
-  const [league, setLeague] = useState('nba');
+export const Home = ({ league, selectedDate }) => {
   const [parlayGames, setParlayGames] = useState([]);
-  
+
   const dateStr = format(selectedDate, 'yyyyMMdd');
   const { data, loading, error } = useScoreboard(league, dateStr);
   const games = data?.events || [];
 
   const liveGames = games.filter(g => g?.status?.type?.state === 'in');
   const otherGames = games.filter(g => g?.status?.type?.state !== 'in');
-  
+
   const sortedOther = sortGamesByImportance(otherGames, league);
 
   const handleAddToParlay = (game) => {
@@ -38,24 +34,6 @@ export const Home = () => {
   return (
     <PageWrapper>
       <div className="max-w-6xl mx-auto px-4 py-8">
-        <DatePicker selectedDate={selectedDate} onDateChange={setSelectedDate} />
-        
-        <div className="flex gap-2 mb-12 justify-center">
-          {['nba', 'mens-college-basketball'].map((l) => (
-            <button
-              key={l}
-              onClick={() => setLeague(l)}
-              className={`px-6 py-2 rounded-lg text-xs font-bold uppercase tracking-widest transition-all ${
-                league === l 
-                  ? 'bg-blue-600 text-white shadow-lg shadow-blue-500/20' 
-                  : 'bg-white/5 text-slate-400 hover:bg-white/10'
-              }`}
-            >
-              {l === 'nba' ? 'NBA' : 'NCAAM'}
-            </button>
-          ))}
-        </div>
-
         {loading ? (
           <div className="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-3 gap-6">
             {[...Array(6)].map((_, i) => <GameCardSkeleton key={i} />)}
@@ -74,9 +52,9 @@ export const Home = () => {
                 </h2>
                 <div className="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-3 gap-6">
                   {liveGames.map(game => (
-                    <GameCard 
-                      key={game.id} 
-                      game={game} 
+                    <GameCard
+                      key={game.id}
+                      game={game}
                       league={league}
                       onAddToParlay={handleAddToParlay}
                       isInParlay={parlayGames.some(g => g.id === game.id)}
@@ -93,9 +71,9 @@ export const Home = () => {
               {sortedOther.length > 0 ? (
                 <div className="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-3 gap-6">
                   {sortedOther.map(game => (
-                    <GameCard 
-                      key={game.id} 
-                      game={game} 
+                    <GameCard
+                      key={game.id}
+                      game={game}
                       league={league}
                       onAddToParlay={handleAddToParlay}
                       isInParlay={parlayGames.some(g => g.id === game.id)}
@@ -111,9 +89,9 @@ export const Home = () => {
           </div>
         )}
       </div>
-      
+
       {parlayGames.length > 0 && (
-        <ParlayBuilder 
+        <ParlayBuilder
           selectedGames={parlayGames}
           onAddGame={handleAddToParlay}
           onRemoveGame={handleRemoveFromParlay}

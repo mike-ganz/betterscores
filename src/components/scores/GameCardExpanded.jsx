@@ -1,18 +1,22 @@
 import { useState, useEffect } from 'react';
-import { X, TrendingUp, Zap, Target, BarChart3, TrendingDown } from 'lucide-react';
-import { useNavigate } from 'react-router-dom';
+import { X } from 'lucide-react';
 import { espnAPI } from '../../utils/api-client';
 import { mockOdds } from '../../utils/mock-odds';
+import { getGameInsights } from '../../utils/game-insights';
 
 export const GameCardExpanded = ({ game, league = 'nba', onClose }) => {
   const [summary, setSummary] = useState(null);
-  const navigate = useNavigate();
-  
+  const [coreOdds, setCoreOdds] = useState(null);
+
   useEffect(() => {
     const fetchData = async () => {
       try {
-        const summaryData = await espnAPI.getGameSummary(league, game.id);
+        const [summaryData, oddsData] = await Promise.all([
+          espnAPI.getGameSummary(league, game.id),
+          espnAPI.getCoreOdds(league, game.id).catch(() => null),
+        ]);
         setSummary(summaryData);
+        setCoreOdds(oddsData);
       } catch (err) {
         console.error(err);
       }
@@ -41,31 +45,23 @@ export const GameCardExpanded = ({ game, league = 'nba', onClose }) => {
   const isOver = competition.status?.type?.state === 'post';
 
   const getOdds = () => {
-    const odds = game.competitions?.[0]?.odds?.[0];
-    
-    // Try to get ESPN data first
-    const mlHome = odds?.moneyline?.home?.close?.odds;
-    const mlAway = odds?.moneyline?.away?.close?.odds;
-    
-    // Use ESPN if available, otherwise generate mock
-    if (mlHome && mlAway && mlHome !== 'N/A' && mlAway !== 'N/A') {
-      return mockOdds.enrichOdds(
-        {
-          moneylineHome: mlHome,
-          moneylineAway: mlAway,
-          spread: odds.spread,
-          spreadText: odds.details || 'N/A',
-          overUnder: odds.overUnder,
-        },
-        home.team?.shortDisplayName,
-        away.team?.shortDisplayName,
-        home.records?.[0]?.summary,
-        away.records?.[0]?.summary
-      );
-    }
-    
-    // Generate mock odds for MVP
-    return mockOdds.generateGameOdds(
+    // Try scoreboard odds first, then core odds
+    const sbOdds = game.competitions?.[0]?.odds?.[0];
+    const hasSbOdds = sbOdds?.spread != null || sbOdds?.overUnder != null;
+
+    const oddsData = hasSbOdds
+      ? {
+          spread: sbOdds.spread,
+          overUnder: sbOdds.overUnder,
+          moneylineHome: sbOdds?.moneyline?.home?.close?.odds || null,
+          moneylineAway: sbOdds?.moneyline?.away?.close?.odds || null,
+        }
+      : coreOdds;
+
+    if (!oddsData) return null;
+
+    return mockOdds.enrichOdds(
+      oddsData,
       home.team?.shortDisplayName,
       away.team?.shortDisplayName,
       home.records?.[0]?.summary,
@@ -73,83 +69,7 @@ export const GameCardExpanded = ({ game, league = 'nba', onClose }) => {
     );
   };
 
-  const getSmartAnalysis = () => {
-    if (!summary && !isLive) return { 
-      title: "Pregame Setup", 
-      description: "Loading analysis...", 
-      icon: <TrendingUp size={16} /> 
-    };
-    
-    const plays = summary?.plays || [];
-    const homeScoreValue = parseInt(home.score) || 0;
-    const awayScoreValue = parseInt(away.score) || 0;
-    const detail = (competition.status?.type?.detail || '').toLowerCase();
-    const isCrunchTime = isLive && (detail.includes('4th') || detail.includes('2nd half')) && (parseInt(competition.status?.displayClock?.split(':')[0] || 0) < 5);
-
-    // Run Detection for live games
-    let homeRun = 0;
-    let awayRun = 0;
-    if (plays.length >= 2) {
-      for (let i = plays.length - 1; i >= 0 && i > plays.length - 8; i--) {
-         const p = plays[i];
-         const prev = plays[i-1];
-         if (p.scoringPlay && prev) {
-            if (p.homeScore > prev.homeScore) homeRun += (p.homeScore - prev.homeScore);
-            if (p.awayScore > prev.awayScore) awayRun += (p.awayScore - prev.awayScore);
-         }
-      }
-    }
-
-    // Crunchy time analysis
-    if (isCrunchTime) {
-        const margin = Math.abs(homeScoreValue - awayScoreValue);
-        const leader = homeScoreValue > awayScoreValue ? home.team.shortDisplayName : away.team.shortDisplayName;
-        return {
-            title: "Crunch Time",
-            description: `${leader} up ${margin}. Possession and execution are everything in the final minutes.`,
-            icon: <Zap className="text-yellow-400" size={16} />
-        };
-    }
-
-    // Momentum swing
-    if (homeRun >= 8 || awayRun >= 8) {
-       const runTeam = homeRun >= 8 ? home.team.shortDisplayName : away.team.shortDisplayName;
-       return {
-          title: "Hot Streak",
-          description: `${runTeam} on a ${Math.max(homeRun, awayRun)}-point run. Offense clicking on all cylinders.`,
-          icon: <TrendingUp className="text-orange-400" size={16} />
-       };
-    }
-
-    // Live game general analysis
-    if (isLive) {
-        const leader = homeScoreValue > awayScoreValue ? home.team.shortDisplayName : away.team.shortDisplayName;
-        return {
-            title: "Live Action",
-            description: `${leader} leads. Check the full stats for scoring trends and bench performance.`,
-            icon: <Target className="text-blue-400" size={16} />
-        };
-    }
-
-    // Pregame: Use records to inform analysis
-    const homeRecord = home.records?.[0]?.summary || '';
-    const awayRecord = away.records?.[0]?.summary || '';
-    const homeSeedIcon = home.seedValue ? `(#${home.seedValue})` : '';
-    const awaySeedIcon = away.seedValue ? `(#${away.seedValue})` : '';
-    
-    const oddsData = getOdds();
-    const suggestsFavorite = oddsData?.spreadText?.includes('-') ? 
-      `${home.team.shortDisplayName} favored` : 
-      `${away.team.shortDisplayName} favored`;
-    
-    return {
-        title: "Pregame Matchup",
-        description: `${away.team.shortDisplayName} ${awayRecord} ${awaySeedIcon} @ ${home.team.shortDisplayName} ${homeRecord} ${homeSeedIcon}. ${suggestsFavorite} per oddsmakers.`,
-        icon: <BarChart3 className="text-slate-400" size={16} />
-    };
-  };
-
-  const analysis = getSmartAnalysis();
+  const insights = getGameInsights(game, summary);
   const displayOdds = getOdds();
 
   const handleClose = () => {
@@ -158,12 +78,13 @@ export const GameCardExpanded = ({ game, league = 'nba', onClose }) => {
   };
 
   return (
-    <div className="fixed inset-0 bg-slate-950/95 backdrop-blur-sm z-50 flex items-center justify-center p-4" onClick={handleClose}>
-      <div 
-        className="bg-[#0f1117] border border-white/10 rounded-2xl w-full max-w-2xl shadow-2xl flex flex-col overflow-hidden"
-        onClick={(e) => e.stopPropagation()}
-        style={{ maxHeight: '80vh' }}
-      >
+    <div className="fixed inset-0 bg-slate-950/95 backdrop-blur-sm z-50 overflow-y-auto p-4" onClick={handleClose}>
+      <div className="min-h-full flex items-center justify-center">
+        <div
+          className="bg-[#0f1117] border border-white/10 rounded-2xl w-full max-w-2xl shadow-2xl flex flex-col overflow-hidden my-8"
+          onClick={(e) => e.stopPropagation()}
+          style={{ maxHeight: 'calc(100vh - 4rem)' }}
+        >
         {/* Enhanced Header with Records (Sticky) */}
         <div className="sticky top-0 p-4 sm:p-6 border-b border-white/5 flex justify-between items-start bg-[#0f1117]/95 backdrop-blur z-10">
           <div className="flex-1 min-w-0">
@@ -190,16 +111,17 @@ export const GameCardExpanded = ({ game, league = 'nba', onClose }) => {
 
         {/* Info Grid (Scrollable Content) */}
         <div className="overflow-y-auto flex-1 p-4 sm:p-6 space-y-6" style={{ WebkitOverflowScrolling: 'touch' }}>
-          {/* Analysis Card - Muted */}
-          <div className="bg-blue-500/[0.03] border border-blue-500/10 p-4 rounded-xl flex gap-3 items-center">
-             <div className="p-2 rounded-lg bg-blue-500/10 text-blue-400">
-                {analysis.icon}
-             </div>
-             <div>
-                <h4 className="text-[10px] font-black text-blue-400/80 uppercase tracking-widest mb-0.5">{analysis.title}</h4>
-                <p className="text-sm text-slate-300 font-medium leading-relaxed">{analysis.description}</p>
-             </div>
-          </div>
+          {/* Data Insights */}
+          {insights.length > 0 && (
+            <div className="space-y-2">
+              {insights.map((insight, i) => (
+                <div key={i} className="flex items-baseline gap-3 px-4 py-2.5 bg-white/[0.02] border border-white/5 rounded-lg">
+                  <span className="text-[9px] font-black text-slate-500 uppercase tracking-widest whitespace-nowrap w-24 flex-shrink-0">{insight.label}</span>
+                  <span className="text-sm font-semibold text-slate-200">{insight.value}</span>
+                </div>
+              ))}
+            </div>
+          )}
 
            {/* Betting Data - Enhanced with Implied Probability */}
            {displayOdds && (
@@ -253,15 +175,52 @@ export const GameCardExpanded = ({ game, league = 'nba', onClose }) => {
                 <div className="grid grid-cols-2 gap-4 pt-3 border-t border-white/5">
                   <div>
                     <span className="text-[8px] font-bold text-slate-600 uppercase tracking-wider block mb-2">Spread</span>
-                    <div className="text-base font-bold text-white tabular-nums">{displayOdds.spread > 0 ? `+${displayOdds.spread}` : displayOdds.spread}</div>
-                    <div className="text-[9px] text-slate-500 mt-1">{home.team?.abbreviation} favored</div>
+                    <div className="flex items-baseline gap-2">
+                      <div className="text-base font-bold text-white tabular-nums">{displayOdds.spread > 0 ? `+${displayOdds.spread}` : displayOdds.spread}</div>
+                      {displayOdds.spreadOddsHome && (
+                        <span className="text-xs text-slate-500 tabular-nums">({mockOdds.formatOdds(displayOdds.spreadOddsHome)})</span>
+                      )}
+                    </div>
+                    <div className="text-[9px] text-slate-500 mt-1">{displayOdds.spread <= 0 ? home.team?.abbreviation : away.team?.abbreviation} favored</div>
+                    {displayOdds.openSpread != null && displayOdds.openSpread !== displayOdds.spread && (
+                      <div className="text-[11px] text-slate-500 mt-1 tabular-nums">
+                        Opened <span className="text-slate-400">{displayOdds.openSpread > 0 ? `+${displayOdds.openSpread}` : displayOdds.openSpread}</span>
+                      </div>
+                    )}
                   </div>
                   <div>
                     <span className="text-[8px] font-bold text-slate-600 uppercase tracking-wider block mb-2">Total</span>
                     <div className="text-base font-bold text-white tabular-nums">{displayOdds.overUnder}</div>
-                    <div className="text-[9px] text-slate-500 mt-1">O/U</div>
+                    {displayOdds.overOdds && displayOdds.underOdds ? (
+                      <div className="text-[11px] text-slate-500 mt-1 tabular-nums">
+                        O {mockOdds.formatOdds(displayOdds.overOdds)} / U {mockOdds.formatOdds(displayOdds.underOdds)}
+                      </div>
+                    ) : (
+                      <div className="text-[11px] text-slate-500 mt-1">O/U</div>
+                    )}
                   </div>
                 </div>
+
+                {/* Moneyline Line Movement */}
+                {displayOdds.openMoneylineHome != null && displayOdds.openMoneylineHome !== displayOdds.moneylineHome && (
+                  <div className="pt-3 border-t border-white/5">
+                    <span className="text-[8px] font-bold text-slate-600 uppercase tracking-wider block mb-2">Line Movement</span>
+                    <div className="grid grid-cols-2 gap-3 text-xs tabular-nums">
+                      <div className="flex items-center gap-2">
+                        <span className="text-slate-500">{home.team?.abbreviation} ML:</span>
+                        <span className="text-slate-400">{mockOdds.formatOdds(displayOdds.openMoneylineHome)}</span>
+                        <span className="text-slate-600">→</span>
+                        <span className="text-amber-400">{mockOdds.formatOdds(displayOdds.moneylineHome)}</span>
+                      </div>
+                      <div className="flex items-center gap-2">
+                        <span className="text-slate-500">{away.team?.abbreviation} ML:</span>
+                        <span className="text-slate-400">{mockOdds.formatOdds(displayOdds.openMoneylineAway)}</span>
+                        <span className="text-slate-600">→</span>
+                        <span className="text-amber-400">{mockOdds.formatOdds(displayOdds.moneylineAway)}</span>
+                      </div>
+                    </div>
+                  </div>
+                )}
              </div>
            )}
 
@@ -324,6 +283,7 @@ export const GameCardExpanded = ({ game, league = 'nba', onClose }) => {
 
         {/* Footer padding to prevent content hiding under bottom of modal */}
         <div className="h-4"></div>
+        </div>
       </div>
     </div>
   );
