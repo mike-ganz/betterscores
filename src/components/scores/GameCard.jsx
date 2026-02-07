@@ -15,7 +15,8 @@ export const GameCard = ({ game, league = 'nba' }) => {
   if (!competition) return null;
 
   const { competitors, status } = competition;
-  const [away, home] = competitors || [];
+  const home = competitors?.find(c => c.homeAway === 'home');
+  const away = competitors?.find(c => c.homeAway === 'away');
 
   const isLive = status?.type?.state === 'in';
   const isOver = status?.type?.state === 'post';
@@ -93,7 +94,7 @@ export const GameCard = ({ game, league = 'nba' }) => {
                       <span className="text-[11px] text-slate-400 font-medium">{team?.records?.[0]?.summary}</span>
                    </div>
                 </div>
-                <div className={`text-3xl font-bold tabular-nums ml-3 ${team?.team?.id === home?.team?.id ? 'text-blue-400' : 'text-slate-100'}`}>
+                <div className={`text-3xl font-bold tabular-nums ml-3 ${parseInt(team?.score) > parseInt((team === home ? away : home)?.score) ? 'text-blue-400' : 'text-slate-100'}`}>
                    {team?.score}
                 </div>
               </div>

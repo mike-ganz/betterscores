@@ -38,7 +38,8 @@ export const GameCardExpanded = ({ game, league = 'nba', onClose }) => {
   const competition = game.competitions?.[0];
   if (!competition) return null;
 
-  const [away, home] = competition.competitors || [];
+  const home = competition.competitors?.find(c => c.homeAway === 'home');
+  const away = competition.competitors?.find(c => c.homeAway === 'away');
   if (!home || !away) return null;
 
   const isLive = competition.status?.type?.state === 'in';
