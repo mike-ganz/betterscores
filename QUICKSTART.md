@@ -1,60 +1,57 @@
-# 🚀 Courtside - Quick Start Guide
+# Courtside - Quick Start
 
-## Start the App (Development)
+## Run Locally (Full Features)
 
-\`\`\`bash
-cd react-apps/courtside
+```bash
+npm install
+vercel dev
+```
+
+Opens at **http://localhost:3000** with live scores, odds, and player props.
+
+**First time setup:**
+```bash
+npm i -g vercel    # Install Vercel CLI
+vercel login       # Authenticate
+vercel link        # Link to your Vercel project
+```
+
+## Run Locally (Frontend Only)
+
+```bash
 npm run dev
-\`\`\`
+```
 
-Then open **http://localhost:5173** in your browser.
+Opens at **http://localhost:5173**. Everything works except player props (requires the serverless function).
 
 ## What You'll See
 
 ### Home Page (Scores)
-- Horizontal date picker at the top (scroll to browse dates)
-- Toggle between NBA and NCAAM games
-- Live game status with pulsing badges
-- Team logos, current scores, rankings
-- Mobile-optimized card layout
+- Date picker at top (7 days back/forward)
+- NBA and NCAAM game cards with live odds (spread, ML, O/U)
+- Click any game card to expand it:
+  - Full Vegas lines with implied probability
+  - Data-driven insights (pregame, live, or postgame)
+  - **Player props** from FanDuel (NBA only) — points, rebounds, assists, 3PM with over/under lines
+  - Leading scorers with foul trouble alerts (live games)
 
-### Standings Page
-- Toggle between NBA and NCAAM
-- **NBA:** Switch between Eastern/Western conferences
-- **NCAAM:** AP Top 25 rankings with team logos
-- Clean table layout with W-L records, percentages, games behind
+### Standings
+- NBA: Eastern/Western conference standings
+- NCAAM: AP Top 25 + conference standings filter
 
-### Navigation
-- Sticky top bar with Courtside logo
-- Quick access to Scores and Standings
+### Team & Player Pages
+- Click team logos for roster/stats
+- Click player names for season averages
 
-## Mobile Testing
+## Key Files
 
-The app is **mobile-first**, so test it by:
-1. Opening Chrome DevTools (F12)
-2. Click the device toolbar icon (Ctrl+Shift+M)
-3. Select a mobile device (iPhone, Pixel, etc.)
+- **ESPN API client:** `src/utils/api-client.js`
+- **FanDuel client:** `src/utils/fd-client.js`
+- **Odds fallback/enrichment:** `src/utils/mock-odds.js`
+- **Serverless proxy:** `api/dk-props.js`
+- **Game card modal:** `src/components/scores/GameCardExpanded.jsx`
+- **Player props UI:** `src/components/scores/PlayerPropsSection.jsx`
 
-Or just resize your browser to phone width!
+## Deploy
 
-## Build for Production
-
-\`\`\`bash
-npm run build
-npm run preview  # Test production build locally
-\`\`\`
-
-Production files will be in `dist/` folder.
-
-## Customization
-
-Want to tweak something? Main files:
-
-- **Colors:** `src/index.css` (Modern Varsity palette)
-- **API calls:** `src/utils/api-client.js`
-- **Components:** `src/components/`
-- **Pages:** `src/pages/`
-
----
-
-**Enjoy tracking hoops! 🏀**
+Push to `main` — Vercel auto-deploys via GitHub integration.

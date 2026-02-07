@@ -23,7 +23,21 @@
       "Bash(git remote set-url:*)",
       "Bash(git add:*)",
       "Bash(git commit:*)",
-      "Bash(git push:*)"
+      "Bash(git push:*)",
+      "WebFetch(domain:rapidapi.com)",
+      "WebFetch(domain:www.prop-odds.com)",
+      "WebFetch(domain:gist.github.com)",
+      "WebFetch(domain:sportsapis.dev)",
+      "WebFetch(domain:sportsgameodds.com)",
+      "WebFetch(domain:developer.opticodds.com)",
+      "WebFetch(domain:sportsbook.draftkings.com)",
+      "WebFetch(domain:seandrummy.medium.com)",
+      "WebFetch(domain:github.com)",
+      "WebFetch(domain:apidog.com)",
+      "Bash(dir:*)",
+      "Bash(npx:*)",
+      "Bash(__NEW_LINE_e18c61c41de71d5e__ node -e \"\nconst fs = require\\(''fs''\\);\nconst j = JSON.parse\\(fs.readFileSync\\(process.env.TEMP + ''/fd_popular.json'',''utf8''\\)\\);\nconst markets = Object.values\\(j.attachments?.markets || {}\\);\nconsole.log\\(''Total markets in popular tab:'', markets.length\\);\nconst names = [...new Set\\(markets.map\\(m => m.marketName\\)\\)];\nconsole.log\\(''Market names:'', names\\);\n\")",
+      "Bash(__NEW_LINE_f8c375d4005fccb5__ node -e \"\nconst fs = require\\(''fs''\\);\nconst j = JSON.parse\\(fs.readFileSync\\(process.env.TEMP + ''/fd_all.json'',''utf8''\\)\\);\nconst markets = Object.values\\(j.attachments?.markets || {}\\);\nconsole.log\\(''Total markets in all tab:'', markets.length\\);\nconst names = [...new Set\\(markets.map\\(m => m.marketName\\)\\)];\nconsole.log\\(''All market names:''\\);\nnames.forEach\\(n => console.log\\('' -'', n\\)\\);\n\")"
     ]
   }
 }

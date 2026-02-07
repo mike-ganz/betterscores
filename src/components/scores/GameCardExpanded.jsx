@@ -3,6 +3,8 @@ import { X } from 'lucide-react';
 import { espnAPI } from '../../utils/api-client';
 import { mockOdds } from '../../utils/mock-odds';
 import { getGameInsights } from '../../utils/game-insights';
+import { usePlayerProps } from '../../hooks/usePlayerProps';
+import { PlayerPropsSection } from './PlayerPropsSection';
 
 export const GameCardExpanded = ({ game, league = 'nba', onClose }) => {
   const [summary, setSummary] = useState(null);
@@ -36,14 +38,25 @@ export const GameCardExpanded = ({ game, league = 'nba', onClose }) => {
   }, [onClose]);
 
   const competition = game.competitions?.[0];
-  if (!competition) return null;
+  const home = competition?.competitors?.find(c => c.homeAway === 'home');
+  const away = competition?.competitors?.find(c => c.homeAway === 'away');
 
-  const home = competition.competitors?.find(c => c.homeAway === 'home');
-  const away = competition.competitors?.find(c => c.homeAway === 'away');
-  if (!home || !away) return null;
+  const isOver = competition?.status?.type?.state === 'post';
+  const shouldFetchProps = league === 'nba' && !isOver && !!home && !!away;
+
+  const {
+    data: propsData,
+    loading: propsLoading,
+    error: propsError,
+  } = usePlayerProps(
+    home?.team?.shortDisplayName,
+    away?.team?.shortDisplayName,
+    shouldFetchProps
+  );
+
+  if (!competition || !home || !away) return null;
 
   const isLive = competition.status?.type?.state === 'in';
-  const isOver = competition.status?.type?.state === 'post';
 
   const getOdds = () => {
     // Try scoreboard odds first, then core odds
@@ -223,6 +236,15 @@ export const GameCardExpanded = ({ game, league = 'nba', onClose }) => {
                   </div>
                 )}
              </div>
+           )}
+
+           {/* Player Props */}
+           {shouldFetchProps && (
+             <PlayerPropsSection
+               propsData={propsData}
+               loading={propsLoading}
+               error={propsError}
+             />
            )}
 
            {/* Live Game Context */}
