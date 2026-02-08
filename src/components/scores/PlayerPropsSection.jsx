@@ -112,13 +112,15 @@ const PropRow = ({ prop, indicator }) => {
   );
 };
 
-export const PlayerPropsSection = ({ propsData, loading, error, indicators }) => {
+export const PlayerPropsSection = ({ propsData, loading, error, indicators, hideHeader = false, className = '' }) => {
   if (loading) {
     return (
-      <div className="bg-white/[0.02] border border-white/5 rounded-xl p-3 sm:p-5">
-        <h4 className="text-[9px] font-black text-slate-500 uppercase tracking-widest mb-3 sm:mb-4">
-          Player Props
-        </h4>
+      <div className={`bg-white/[0.02] border border-white/5 rounded-xl p-3 sm:p-5 ${className}`}>
+        {!hideHeader && (
+          <h4 className="text-[9px] font-black text-slate-500 uppercase tracking-widest mb-3 sm:mb-4">
+            Player Props
+          </h4>
+        )}
         <div className="space-y-2">
           {[...Array(3)].map((_, i) => (
             <div key={i} className="h-12 bg-white/[0.03] rounded-lg animate-pulse" />
@@ -137,13 +139,15 @@ export const PlayerPropsSection = ({ propsData, loading, error, indicators }) =>
   const hasIndicators = indicators && Object.keys(indicators).length > 0;
 
   return (
-    <div className="bg-white/[0.02] border border-white/5 rounded-xl p-3 sm:p-5 space-y-3 sm:space-y-4">
-      <h4 className="text-[9px] font-black text-slate-500 uppercase tracking-widest flex items-center gap-2">
-        Player Props
-        <span className="text-[8px] bg-emerald-500/10 text-emerald-400 px-1.5 py-0.5 rounded">
-          FanDuel
-        </span>
-      </h4>
+    <div className={`bg-white/[0.02] border border-white/5 rounded-xl p-3 sm:p-5 space-y-3 sm:space-y-4 ${className}`}>
+      {!hideHeader && (
+        <h4 className="text-[9px] font-black text-slate-500 uppercase tracking-widest flex items-center gap-2">
+          Player Props
+          <span className="text-[8px] bg-emerald-500/10 text-emerald-400 px-1.5 py-0.5 rounded">
+            FanDuel
+          </span>
+        </h4>
+      )}
 
       {hasIndicators && (
         <div className="flex items-center gap-2.5 text-[8px] text-slate-600">

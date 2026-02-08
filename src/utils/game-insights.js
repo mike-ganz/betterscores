@@ -182,25 +182,6 @@ function getLiveInsights(game, summary, competition) {
     }
   }
 
-  // Top scorer
-  if (playerStats) {
-    let best = null, bestPts = 0, bestTeamAbbr = '';
-    for (const team of playerStats) {
-      for (const athlete of (team.statistics?.[0]?.athletes || [])) {
-        const pts = parseInt(athlete?.stats?.[1]) || 0;
-        if (pts > bestPts) { bestPts = pts; best = athlete; bestTeamAbbr = team.team?.abbreviation || ''; }
-      }
-    }
-    if (best && bestPts > 0) {
-      const reb = best.stats?.[4] || '0';
-      const ast = best.stats?.[3] || '0';
-      baseline.push({
-        label: 'Leading Scorer',
-        value: `${best.athlete?.shortName || 'Player'} (${bestTeamAbbr}): ${bestPts} pts, ${reb} reb, ${ast} ast`,
-      });
-    }
-  }
-
   // Margin as last resort
   if (totalScore > 0) {
     const margin = Math.abs(homeScore - awayScore);

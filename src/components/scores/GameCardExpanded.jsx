@@ -1,5 +1,5 @@
 import { useState, useEffect } from 'react';
-import { X } from 'lucide-react';
+import { X, ChevronDown } from 'lucide-react';
 import { espnAPI } from '../../utils/api-client';
 import { mockOdds } from '../../utils/mock-odds';
 import { getGameInsights } from '../../utils/game-insights';
@@ -9,6 +9,8 @@ import { PlayerPropsSection } from './PlayerPropsSection';
 export const GameCardExpanded = ({ game, league = 'nba', onClose }) => {
   const [summary, setSummary] = useState(null);
   const [coreOdds, setCoreOdds] = useState(null);
+  const [activeBoxTeam, setActiveBoxTeam] = useState(0);
+  const [propsExpanded, setPropsExpanded] = useState(false);
 
   useEffect(() => {
     const fetchData = async () => {
@@ -92,12 +94,12 @@ export const GameCardExpanded = ({ game, league = 'nba', onClose }) => {
   };
 
   return (
-    <div className="fixed inset-0 bg-slate-950/95 backdrop-blur-sm z-50 overflow-y-auto p-4" onClick={handleClose}>
+    <div className="fixed inset-0 bg-slate-950/95 backdrop-blur-sm z-50 overflow-y-auto p-2 sm:p-4" onClick={handleClose}>
       <div className="min-h-full flex items-center justify-center">
         <div
-          className="bg-[#0f1117] border border-white/10 rounded-2xl w-full max-w-2xl shadow-2xl flex flex-col overflow-hidden my-8"
+          className="bg-[#0f1117] border border-white/10 rounded-2xl w-full max-w-2xl shadow-2xl flex flex-col overflow-hidden my-2 sm:my-8"
           onClick={(e) => e.stopPropagation()}
-          style={{ maxHeight: 'calc(100vh - 4rem)' }}
+          style={{ maxHeight: 'calc(100vh - 1rem)' }}
         >
         {/* Enhanced Header with Records (Sticky) */}
         <div className="sticky top-0 p-4 sm:p-6 border-b border-white/5 flex justify-between items-start bg-[#0f1117]/95 backdrop-blur z-10">
@@ -125,7 +127,7 @@ export const GameCardExpanded = ({ game, league = 'nba', onClose }) => {
 
         {/* Info Grid (Scrollable Content) */}
         <div className="overflow-y-auto flex-1 p-4 sm:p-6 space-y-4 sm:space-y-6" style={{ WebkitOverflowScrolling: 'touch' }}>
-          {/* Data Insights */}
+          {/* Data Insights - disabled for now, not providing clear value
           {insights.length > 0 && (
             <div className="space-y-2">
               {insights.map((insight, i) => (
@@ -136,6 +138,7 @@ export const GameCardExpanded = ({ game, league = 'nba', onClose }) => {
               ))}
             </div>
           )}
+          */}
 
            {/* Betting Data - Enhanced with Implied Probability */}
            {displayOdds && (
@@ -238,59 +241,166 @@ export const GameCardExpanded = ({ game, league = 'nba', onClose }) => {
              </div>
            )}
 
-           {/* Player Props */}
+           {/* Player Stats Box Score */}
+           {summary?.boxscore?.players?.length > 0 && (() => {
+             const bsTeams = summary.boxscore.players;
+             const team = bsTeams[activeBoxTeam];
+             const allAthletes = (team?.statistics || []).flatMap(s => s.athletes || []);
+             const labels = team?.statistics?.[0]?.labels || [];
+             const minIdx = labels.indexOf('MIN');
+             const ptsIdx = labels.indexOf('PTS');
+
+             const parseMin = (val) => {
+               if (!val) return 0;
+               if (val.includes(':')) return parseInt(val.split(':')[0]) + parseInt(val.split(':')[1]) / 60;
+               return parseFloat(val) || 0;
+             };
+
+             const athletes = allAthletes
+               .filter(p => {
+                 if (!p.stats?.length) return false;
+                 return minIdx >= 0 && p.stats[minIdx] && p.stats[minIdx] !== '0';
+               })
+               .sort((a, b) => parseMin(b.stats[minIdx]) - parseMin(a.stats[minIdx]));
+
+             if (!athletes.length) return null;
+
+             const MOBILE_COLS = ['MIN', 'PTS', 'REB', 'AST'];
+             const DESKTOP_COLS = ['FG', '3PT', '+/-'];
+
+             return (
+               <div className="bg-white/[0.02] border border-white/5 rounded-xl overflow-hidden">
+                 <div className="flex items-center justify-between px-3 sm:px-4 py-2 border-b border-white/5">
+                   <h4 className="text-[9px] font-black text-slate-500 uppercase tracking-widest">Player Stats</h4>
+                   <div className="flex gap-1">
+                     {bsTeams.map((t, idx) => (
+                       <button
+                         key={t.team.id}
+                         onClick={() => setActiveBoxTeam(idx)}
+                         className={`flex items-center gap-1.5 px-2 py-1 rounded text-[10px] font-bold transition-colors ${
+                           activeBoxTeam === idx
+                             ? 'bg-blue-500/20 text-blue-400 border border-blue-500/30'
+                             : 'text-slate-500 hover:text-slate-300 border border-transparent'
+                         }`}
+                       >
+                         <img src={t.team.logo} className="w-4 h-4" alt="" />
+                         {t.team.abbreviation}
+                       </button>
+                     ))}
+                   </div>
+                 </div>
+
+                 <div className="overflow-x-auto" style={{ WebkitOverflowScrolling: 'touch' }}>
+                   <table className="w-full">
+                     <thead>
+                       <tr className="border-b border-white/5">
+                         <th className="sticky left-0 z-10 bg-[#12151c] px-2 sm:px-3 py-1.5 text-left text-[9px] font-bold text-slate-500 uppercase min-w-[110px] sm:min-w-[140px]">
+                           Player
+                         </th>
+                         {MOBILE_COLS.map(stat => {
+                           if (labels.indexOf(stat) === -1) return null;
+                           return (
+                             <th key={stat} className="px-1.5 sm:px-2 py-1.5 text-center text-[9px] font-bold text-slate-500 uppercase whitespace-nowrap">
+                               {stat}
+                             </th>
+                           );
+                         })}
+                         {DESKTOP_COLS.map(stat => {
+                           if (labels.indexOf(stat) === -1) return null;
+                           return (
+                             <th key={stat} className="px-1.5 sm:px-2 py-1.5 text-center text-[9px] font-bold text-slate-500 uppercase whitespace-nowrap hidden sm:table-cell">
+                               {stat}
+                             </th>
+                           );
+                         })}
+                       </tr>
+                     </thead>
+                     <tbody className="divide-y divide-white/[0.03]">
+                       {athletes.map((player) => {
+                         const pts = parseInt(player.stats?.[ptsIdx]) || 0;
+                         const isTopScorer = pts >= 20;
+                         return (
+                           <tr key={player.athlete.id} className="hover:bg-white/[0.03] transition-colors">
+                             <td className="sticky left-0 z-10 bg-[#0f1117] px-2 sm:px-3 py-1.5">
+                               <div className="flex items-center gap-1.5">
+                                 {player.athlete?.headshot?.href ? (
+                                   <img src={player.athlete.headshot.href} alt="" className="w-5 h-5 rounded-full bg-slate-800 flex-shrink-0" />
+                                 ) : (
+                                   <div className="w-5 h-5 rounded-full bg-slate-800 flex-shrink-0" />
+                                 )}
+                                 <span className={`text-[11px] font-semibold truncate max-w-[80px] sm:max-w-[120px] ${isTopScorer ? 'text-white' : 'text-slate-300'}`}>
+                                   {player.athlete.shortName || player.athlete.displayName}
+                                 </span>
+                               </div>
+                             </td>
+                             {MOBILE_COLS.map(stat => {
+                               const idx = labels.indexOf(stat);
+                               if (idx === -1) return null;
+                               const isPts = stat === 'PTS';
+                               return (
+                                 <td key={stat} className={`px-1.5 sm:px-2 py-1.5 text-center text-[11px] tabular-nums ${isPts && isTopScorer ? 'text-white font-bold' : 'text-slate-400'}`}>
+                                   {player.stats?.[idx] || '-'}
+                                 </td>
+                               );
+                             })}
+                             {DESKTOP_COLS.map(stat => {
+                               const idx = labels.indexOf(stat);
+                               if (idx === -1) return null;
+                               return (
+                                 <td key={stat} className="px-1.5 sm:px-2 py-1.5 text-center text-[11px] tabular-nums text-slate-400 hidden sm:table-cell">
+                                   {player.stats?.[idx] || '-'}
+                                 </td>
+                               );
+                             })}
+                           </tr>
+                         );
+                       })}
+                     </tbody>
+                   </table>
+                 </div>
+               </div>
+             );
+           })()}
+
+           {/* Player Props (Collapsible) */}
            {shouldFetchProps && (
-             <PlayerPropsSection
-               propsData={propsData}
-               loading={propsLoading}
-               error={propsError}
-             />
+             <div>
+               <button
+                 onClick={() => setPropsExpanded(v => !v)}
+                 className={`w-full flex items-center justify-between px-3 sm:px-5 py-3 bg-white/[0.02] border border-white/5 transition-colors hover:bg-white/[0.03] ${
+                   propsExpanded ? 'rounded-t-xl border-b-0' : 'rounded-xl'
+                 }`}
+               >
+                 <div className="flex items-center gap-2">
+                   <span className="text-[9px] font-black text-slate-500 uppercase tracking-widest">
+                     Player Props
+                   </span>
+                   <span className="text-[8px] bg-emerald-500/10 text-emerald-400 px-1.5 py-0.5 rounded">
+                     FanDuel
+                   </span>
+                 </div>
+                 <ChevronDown size={14} className={`text-slate-500 transition-transform duration-200 ${propsExpanded ? 'rotate-180' : ''}`} />
+               </button>
+               {propsExpanded && (
+                 <PlayerPropsSection
+                   propsData={propsData}
+                   loading={propsLoading}
+                   error={propsError}
+                   hideHeader
+                   className="rounded-t-none border-t-0"
+                 />
+               )}
+             </div>
            )}
 
-           {/* Live Game Context */}
+           {/* Live Game Status */}
            {isLive && (
-              <div className="space-y-4 pt-2 border-t border-white/5">
-                 {/* Leading Scorers - Top 3 only */}
-                 {summary?.boxscore?.players && (
-                    <div>
-                       <h4 className="text-[9px] font-black text-slate-500 uppercase tracking-widest mb-3">Leading Scorers</h4>
-                       <div className="space-y-2">
-                          {summary.boxscore.players.slice(0, 2).map((team, teamIdx) => {
-                             const leader = team.statistics?.[0]?.athletes?.[0];
-                             if (!leader) return null;
-                             const fouls = leader?.stats?.[10]; // Foul count typically at index 10
-                             const hasFoulTrouble = fouls >= 4;
-                             return (
-                                <div key={`${team.team.id}-${teamIdx}`} className="flex items-center justify-between p-3 bg-white/[0.02] rounded-lg border border-white/5 hover:border-white/10 transition-colors">
-                                   <div className="flex items-center gap-3 flex-1 min-w-0">
-                                      <img src={team.team.logo} className="w-7 h-7 flex-shrink-0 opacity-80" />
-                                      <div className="flex-1 min-w-0">
-                                         <div className="text-sm font-semibold text-slate-100 truncate">{leader?.athlete?.displayName}</div>
-                                         <div className="text-[10px] text-slate-500">{team.team.abbreviation}</div>
-                                      </div>
-                                   </div>
-                                   <div className="text-right flex-shrink-0 ml-2">
-                                      <div className="text-base font-black text-white tabular-nums">{leader?.stats?.[1] || 0}</div>
-                                      <div className="text-[9px] text-slate-500 font-medium">PTS</div>
-                                      {hasFoulTrouble && (
-                                         <div className="text-[8px] text-yellow-400 font-bold mt-0.5">⚠️ {fouls}F</div>
-                                      )}
-                                   </div>
-                                </div>
-                             )
-                          })}
-                       </div>
-                    </div>
-                 )}
-
-                 {/* Live Game Status */}
-                 <div className="bg-gradient-to-r from-blue-500/10 to-blue-500/5 border border-blue-500/20 rounded-lg p-4 flex justify-between items-end">
-                    <div>
-                       <div className="text-[9px] font-black text-blue-400/70 uppercase tracking-widest mb-1">Live Status</div>
-                       <div className="text-sm text-slate-300 font-medium">Q{competition.status?.period || '—'} • {competition.status?.displayClock || '—'}</div>
-                    </div>
-                    <div className="w-2 h-2 rounded-full bg-red-500 animate-pulse"></div>
+              <div className="bg-gradient-to-r from-blue-500/10 to-blue-500/5 border border-blue-500/20 rounded-lg p-4 flex justify-between items-end">
+                 <div>
+                    <div className="text-[9px] font-black text-blue-400/70 uppercase tracking-widest mb-1">Live Status</div>
+                    <div className="text-sm text-slate-300 font-medium">Q{competition.status?.period || '—'} • {competition.status?.displayClock || '—'}</div>
                  </div>
+                 <div className="w-2 h-2 rounded-full bg-red-500 animate-pulse"></div>
               </div>
            )}
 
@@ -302,10 +412,10 @@ export const GameCardExpanded = ({ game, league = 'nba', onClose }) => {
                  </p>
               </div>
            )}
-        </div>
 
-        {/* Footer padding to prevent content hiding under bottom of modal */}
-        <div className="h-4"></div>
+           {/* Bottom spacer so last element is fully scrollable */}
+           <div className="h-2 shrink-0" />
+        </div>
         </div>
       </div>
     </div>
