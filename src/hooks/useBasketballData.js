@@ -1,6 +1,16 @@
 import { useState, useEffect } from 'react';
 import { espnAPI } from '../utils/api-client';
 
+// Compute the previous day's date string (yyyyMMdd → yyyyMMdd)
+function getPreviousDateStr(dateStr) {
+  const year = parseInt(dateStr.substring(0, 4));
+  const month = parseInt(dateStr.substring(4, 6)) - 1;
+  const day = parseInt(dateStr.substring(6, 8));
+  const d = new Date(year, month, day);
+  d.setDate(d.getDate() - 1);
+  return `${d.getFullYear()}${String(d.getMonth() + 1).padStart(2, '0')}${String(d.getDate()).padStart(2, '0')}`;
+}
+
 // Helper: Check if any game needs active polling
 const shouldPollGames = (games) => {
   if (!games || games.length === 0) return false;
@@ -40,9 +50,29 @@ export const useScoreboard = (league, date, autoRefresh = true) => {
     const fetchData = async (isInitial = false) => {
       try {
         if (isInitial) setLoading(true);
-        const result = league === 'nba' 
-          ? await espnAPI.getNBAScoreboard(date)
-          : await espnAPI.getNCAAMScoreboard(date);
+        const fetchFn = league === 'nba'
+          ? (d) => espnAPI.getNBAScoreboard(d)
+          : (d) => espnAPI.getNCAAMScoreboard(d);
+
+        const result = await fetchFn(date);
+
+        // Before 6 AM, also check yesterday's scoreboard for still-live games
+        const hour = new Date().getHours();
+        if (hour < 6) {
+          try {
+            const yesterdayResult = await fetchFn(getPreviousDateStr(date));
+            const todayIds = new Set((result?.events || []).map(e => e.id));
+            const liveYesterday = (yesterdayResult?.events || []).filter(
+              g => g?.status?.type?.state === 'in' && !todayIds.has(g.id)
+            );
+            if (liveYesterday.length > 0) {
+              result.events = [...liveYesterday, ...(result.events || [])];
+            }
+          } catch (err) {
+            console.warn('[useScoreboard] yesterday fetch failed:', err);
+          }
+        }
+
         setData(result);
         setError(null);
         
