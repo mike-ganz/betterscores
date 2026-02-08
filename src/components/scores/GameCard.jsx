@@ -169,9 +169,9 @@ export const GameCard = ({ game, league = 'nba' }) => {
                 {/* Line Movement */}
                 {displayOdds.openSpread != null && displayOdds.openSpread !== displayOdds.spread && (
                   <div className="mt-2 pt-2 border-t border-white/5 text-xs text-slate-500 text-center tabular-nums">
-                    Opened {displayOdds.openSpread > 0 ? `+${displayOdds.openSpread}` : displayOdds.openSpread}
+                    {displayOdds.openSpread <= 0 ? home?.team?.abbreviation : away?.team?.abbreviation} {-Math.abs(displayOdds.openSpread)}
                     {' → '}
-                    <span className="text-amber-400">{displayOdds.spread > 0 ? `+${displayOdds.spread}` : displayOdds.spread}</span>
+                    <span className="text-amber-400">{displayOdds.spread <= 0 ? home?.team?.abbreviation : away?.team?.abbreviation} {-Math.abs(displayOdds.spread)}</span>
                   </div>
                 )}
               </div>

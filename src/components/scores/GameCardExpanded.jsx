@@ -201,7 +201,7 @@ export const GameCardExpanded = ({ game, league = 'nba', onClose }) => {
                     <div className="text-[9px] text-slate-500 mt-1">{displayOdds.spread <= 0 ? home.team?.abbreviation : away.team?.abbreviation} favored</div>
                     {displayOdds.openSpread != null && displayOdds.openSpread !== displayOdds.spread && (
                       <div className="text-[11px] text-slate-500 mt-1 tabular-nums">
-                        Opened <span className="text-slate-400">{-Math.abs(displayOdds.openSpread)}</span>
+                        Opened <span className="text-slate-400">{displayOdds.openSpread <= 0 ? home.team?.abbreviation : away.team?.abbreviation} {-Math.abs(displayOdds.openSpread)}</span>
                       </div>
                     )}
                   </div>
