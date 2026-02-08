@@ -10,6 +10,35 @@ function normalizeName(name) {
 }
 
 /**
+ * Parse game progress from summary status.
+ * Returns estimated game minutes elapsed (0-48, or higher for OT).
+ * NBA: 4 periods × 12 minutes = 48 total.
+ */
+function parseGameProgress(summary) {
+  const status = summary?.header?.competitions?.[0]?.status
+    || summary?.boxscore?.teams?.[0]?.team?.status;
+  const period = status?.period || 0;
+  const clock = status?.displayClock || '0:00';
+
+  // Parse clock (e.g., "5:32" → 5 minutes 32 seconds remaining in period)
+  const [minStr, secStr] = clock.split(':');
+  const clockMinutes = (parseInt(minStr) || 0) + (parseInt(secStr) || 0) / 60;
+
+  // NBA period = 12 minutes. Overtime = 5 minutes.
+  const PERIOD_LENGTH = 12;
+  const OT_LENGTH = 5;
+
+  if (period <= 0) return 0;
+  if (period <= 4) {
+    // Regular time: completed periods + elapsed time in current period
+    return (period - 1) * PERIOD_LENGTH + (PERIOD_LENGTH - clockMinutes);
+  }
+  // Overtime
+  const otPeriod = period - 4;
+  return 48 + (otPeriod - 1) * OT_LENGTH + (OT_LENGTH - clockMinutes);
+}
+
+/**
  * Parse box score from game summary into a player lookup.
  * Returns Map<normalizedName, { playerId, displayName, stats }>
  */
@@ -105,6 +134,9 @@ export function usePropIndicators(gameId, league, propsData, isLive) {
           return;
         }
 
+        // Parse game progress for remaining-minutes estimation
+        const gameMinutesElapsed = parseGameProgress(summary);
+
         // Step 2: Collect unique players from FanDuel props
         const playerSet = new Map(); // normalizedName → { originalName, propLines }
         for (const propType of PROP_TYPES) {
@@ -124,6 +156,7 @@ export function usePropIndicators(gameId, league, propsData, isLive) {
 
         // Step 3: Match FanDuel players to box score, fetch stats, compute indicators
         const newIndicators = {};
+        const debugSignals = []; // Track all signals for diagnosis
 
         const entries = Array.from(playerSet.entries());
         await Promise.all(entries.map(async ([normalizedName, { originalName, propLines }]) => {
@@ -153,9 +186,23 @@ export function usePropIndicators(gameId, league, propsData, isLive) {
               l10Avgs,
               propData.overOdds,
               propData.underOdds,
+              gameMinutesElapsed,
             );
             if (result) {
               playerIndicators[propType] = { ...result, current: currentStat };
+              if (result.projection?.direction) {
+                debugSignals.push({
+                  player: originalName,
+                  prop: propType,
+                  dir: result.projection.direction,
+                  intensity: result.projection.intensity?.toFixed(3),
+                  proj: result.projection.value,
+                  line: propData.line,
+                  avgMin: seasonAvgs?.avgMinutes,
+                  minPlayed: currentStats.minutes,
+                  source: seasonAvgs?.source,
+                });
+              }
             }
           }
 
@@ -165,6 +212,13 @@ export function usePropIndicators(gameId, league, propsData, isLive) {
         }));
 
         if (!cancelled) {
+          // Log signal summary for debugging
+          const overs = debugSignals.filter(s => s.dir === 'over').length;
+          const unders = debugSignals.filter(s => s.dir === 'under').length;
+          console.log(`[indicators] Game ${gameId}: ${overs} overs, ${unders} unders, ${Object.keys(newIndicators).length} players`);
+          if (debugSignals.length > 0) {
+            console.table(debugSignals.sort((a, b) => parseFloat(b.intensity) - parseFloat(a.intensity)).slice(0, 8));
+          }
           setIndicators(newIndicators);
         }
       } catch (err) {

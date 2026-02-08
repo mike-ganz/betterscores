@@ -11,18 +11,28 @@ const PROP_ORDER = ['points', 'rebounds', 'assists', 'threes'];
 
 /**
  * Returns an inline style for a signal dot.
- * Neutral (no signal) = white. Colored = green/red with intensity-based opacity.
+ * Neutral (no signal) = white. Colored dots shift from muted to vivid
+ * as intensity increases (both alpha and hue shift).
  */
 function getSignalStyle(signal) {
   if (!signal || !signal.direction) {
     return { backgroundColor: 'rgba(255, 255, 255, 0.35)' };
   }
   const { direction, intensity } = signal;
-  const alpha = 0.25 + (intensity ?? 0) * 0.75;
+  const t = Math.min(1, Math.max(0, intensity ?? 0));
+  const alpha = 0.1 + t * 0.9;
   if (direction === 'over') {
-    return { backgroundColor: `rgba(52, 211, 153, ${alpha})` };
+    // Muted teal → vivid green
+    const r = Math.round(52 - t * 18);
+    const g = Math.round(211 + t * 39);
+    const b = Math.round(153 - t * 53);
+    return { backgroundColor: `rgba(${r}, ${g}, ${b}, ${alpha})` };
   }
-  return { backgroundColor: `rgba(248, 113, 113, ${alpha})` };
+  // Muted pink → vivid red
+  const r = Math.round(248 + t * 7);
+  const g = Math.round(113 - t * 63);
+  const b = Math.round(113 - t * 63);
+  return { backgroundColor: `rgba(${r}, ${g}, ${b}, ${alpha})` };
 }
 
 const SignalDot = ({ signal, tooltip, size = 'w-2.5 h-2.5' }) => (
@@ -139,10 +149,10 @@ export const PlayerPropsSection = ({ propsData, loading, error, indicators }) =>
         <div className="flex items-center gap-2.5 text-[8px] text-slate-600">
           <span className="uppercase tracking-wider font-bold">Projection</span>
           <span className="flex items-center gap-1">
-            <span className="w-2 h-2 rounded-full inline-block" style={{ backgroundColor: 'rgba(52, 211, 153, 0.7)' }} /> over
+            <span className="w-2 h-2 rounded-full inline-block" style={{ backgroundColor: 'rgba(39, 238, 116, 0.8)' }} /> over
           </span>
           <span className="flex items-center gap-1">
-            <span className="w-2 h-2 rounded-full inline-block" style={{ backgroundColor: 'rgba(248, 113, 113, 0.7)' }} /> under
+            <span className="w-2 h-2 rounded-full inline-block" style={{ backgroundColor: 'rgba(253, 65, 65, 0.8)' }} /> under
           </span>
           <span className="flex items-center gap-1">
             <span className="w-2 h-2 rounded-full inline-block" style={{ backgroundColor: 'rgba(255, 255, 255, 0.35)' }} /> neutral

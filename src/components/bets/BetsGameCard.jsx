@@ -26,8 +26,9 @@ export const BetsGameCard = ({ game, defaultExpanded = false, onIndicatorsReady 
   const { indicators } = usePropIndicators(game.id, 'nba', propsData, isLive);
 
   // Report indicators up to parent for Best Bets aggregation
+  // Only report when we have actual computed indicators (not the initial empty object)
   useEffect(() => {
-    if (onIndicatorsReady && propsData?.found) {
+    if (onIndicatorsReady && propsData?.found && Object.keys(indicators).length > 0) {
       onIndicatorsReady(game.id, {
         indicators,
         propsData,

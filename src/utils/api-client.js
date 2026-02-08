@@ -87,24 +87,38 @@ export const espnAPI = {
     return response.json();
   },
 
-  // Player Stats
+  // Player Stats (current season, with career fallback)
   getPlayerStats: async (playerId) => {
-    // Use core API for player data
+    // Determine current NBA season year (Oct–Jun season uses the later year)
+    const now = new Date();
+    const seasonYear = now.getMonth() >= 9 ? now.getFullYear() + 1 : now.getFullYear();
+
+    // Try current-season regular-season stats first (type 2 = regular season)
     const response = await fetch(
-      `https://sports.core.api.espn.com/v2/sports/basketball/leagues/nba/athletes/${playerId}/statistics/0?lang=en&region=us`
+      `https://sports.core.api.espn.com/v2/sports/basketball/leagues/nba/seasons/${seasonYear}/types/2/athletes/${playerId}/statistics?lang=en&region=us`
     );
     const statsData = await response.json();
-    
-    // Also fetch basic player info
-    const playerResponse = await fetch(
-      `https://sports.core.api.espn.com/v2/sports/basketball/leagues/nba/athletes/${playerId}?lang=en&region=us`
+    const categories = statsData.splits?.categories;
+
+    if (categories && categories.length > 0) {
+      return { statistics: categories, source: 'season' };
+    }
+
+    // Fallback: try career stats endpoint
+    console.warn(`[api-client] No ${seasonYear} season stats for player ${playerId}, trying career fallback`);
+    const careerResponse = await fetch(
+      `https://sports.core.api.espn.com/v2/sports/basketball/leagues/nba/athletes/${playerId}/statistics/0?lang=en&region=us`
     );
-    const playerData = await playerResponse.json();
-    
-    return {
-      athlete: playerData,
-      statistics: statsData.splits?.categories || []
-    };
+    const careerData = await careerResponse.json();
+    const careerCategories = careerData.splits?.categories;
+
+    if (careerCategories && careerCategories.length > 0) {
+      return { statistics: careerCategories, source: 'career' };
+    }
+
+    // Both failed — return empty
+    console.warn(`[api-client] No stats found for player ${playerId} (season or career)`);
+    return { statistics: [], source: 'none' };
   },
 
   // Team Details

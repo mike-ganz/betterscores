@@ -30,6 +30,11 @@ export async function fetchSeasonAvg(playerId) {
     const data = await espnAPI.getPlayerStats(playerId);
     const categories = data.statistics || [];
 
+    if (categories.length === 0) {
+      console.warn(`[prop-indicators] no stats categories for player ${playerId} (source: ${data.source})`);
+      return null;
+    }
+
     const findStat = (name) => {
       for (const cat of categories) {
         const stat = cat.stats?.find(s => s.name === name);
@@ -45,8 +50,16 @@ export async function fetchSeasonAvg(playerId) {
       avg3PM: findStat('avgThreePointFieldGoalsMade'),
       avgMinutes: findStat('avgMinutes'),
       gamesPlayed: findStat('gamesPlayed'),
+      source: data.source,
     };
 
+    // Don't cache bad data — avgMinutes must be positive
+    if (!result.avgMinutes || result.avgMinutes <= 0) {
+      console.warn(`[prop-indicators] invalid avgMinutes (${result.avgMinutes}) for player ${playerId}, skipping cache`);
+      return null;
+    }
+
+    console.log(`[prop-indicators] season avg for ${playerId}: ${result.avgPoints} ppg, ${result.avgMinutes} mpg (${data.source})`);
     setCache(seasonCache, playerId, result);
     return result;
   } catch (err) {
@@ -146,23 +159,62 @@ function blendedRate(seasonAvg, l10Avg, avgMinutes) {
 }
 
 /**
+ * Estimate remaining player minutes using game clock progress.
+ * If a player has played 30 min through 36 min of game time (75%),
+ * they'll likely play ~30/0.75 = 40 total min → 10 remaining.
+ * Falls back to avgMinutes-based estimate if game progress unavailable.
+ *
+ * @param {number} minutesPlayed - Player's minutes so far
+ * @param {number} avgMinutes - Player's season average minutes
+ * @param {number} gameMinutesElapsed - Game clock minutes elapsed (0-48+)
+ * @returns {number} Estimated remaining player minutes (>= 0)
+ */
+function estimateRemainingMinutes(minutesPlayed, avgMinutes, gameMinutesElapsed) {
+  const GAME_LENGTH = 48; // NBA regulation
+
+  // If we have game progress, use it to extrapolate
+  if (gameMinutesElapsed && gameMinutesElapsed > 0) {
+    const gameFraction = Math.min(1, gameMinutesElapsed / GAME_LENGTH);
+
+    if (gameFraction >= 0.98) {
+      // Game is basically over — no meaningful minutes remain
+      return 0;
+    }
+
+    // Estimate total minutes this player will play based on their current rate
+    const projectedTotalMinutes = minutesPlayed / gameFraction;
+
+    // Use the higher of projected total or avg minutes (player might be getting extra run)
+    const expectedTotal = Math.max(avgMinutes, projectedTotalMinutes);
+    return Math.max(0, expectedTotal - minutesPlayed);
+  }
+
+  // Fallback: use avgMinutes (old behavior)
+  return Math.max(0, avgMinutes - minutesPlayed);
+}
+
+/**
  * Project a player's final stat total using a blended L10/season rate.
+ * Uses game clock progress to estimate remaining minutes more accurately.
  * projection = currentStat + (blendedRate * remainingMinutes)
  */
-export function computeProjection(currentStat, minutesPlayed, avgMinutes, seasonAvg, l10Avg) {
+export function computeProjection(currentStat, minutesPlayed, avgMinutes, seasonAvg, l10Avg, gameMinutesElapsed) {
   const rate = blendedRate(seasonAvg, l10Avg, avgMinutes);
   if (rate == null) return null;
-  const remaining = Math.max(0, avgMinutes - minutesPlayed);
+  const remaining = estimateRemainingMinutes(minutesPlayed, avgMinutes, gameMinutesElapsed);
   return currentStat + rate * remaining;
 }
 
 /**
  * Compute a raw signal with intensity for projection vs line.
+ * Deviation is measured relative to the player's blended average (not the line)
+ * so that low lines (e.g. 0.5 3PM) don't produce absurd percentages.
  * Returns { direction: 'over'|'under', intensity: 0-1 } or null.
  */
-export function computeProjectionSignal(projected, line) {
+export function computeProjectionSignal(projected, line, baseAvg) {
   if (projected == null || line == null || line <= 0) return null;
-  const diff = (projected - line) / line;
+  const denom = baseAvg && baseAvg > 0 ? baseAvg : line;
+  const diff = (projected - line) / denom;
   if (Math.abs(diff) < 0.03) return null; // Dead zone — too close to call
   const direction = diff > 0 ? 'over' : 'under';
   // Scale: 3% → 0, 30%+ → 1.0
@@ -185,31 +237,34 @@ function impliedProb(americanOdds) {
 }
 
 /**
- * Vig adjustment multiplier.
- * Penalizes when the market already agrees with our signal direction
- * (heavy juice = less edge). Modest boost when contrarian.
+ * Vig adjustment multiplier (direction-neutral).
+ * Penalizes based on the overall market overround (total vig),
+ * not which side is favored. Higher vig = market is sharper = less edge.
  *
- * -110 → 0.95 (standard vig, near-full signal)
- * -150 → 0.80 (meaningful penalty)
- * -200 → 0.67 (heavy juice)
- * +110 → 1.05 (slight contrarian boost)
- * +130 → 1.13
+ * -110/-110  → overround 4.8%  → 0.95
+ * -105/-105  → overround 2.4%  → 0.98
+ * -130/-110  → overround 8.9%  → 0.91
+ * -200/+160  → overround 13.5% → 0.87
  *
- * Clamped to [0.5, 1.2]
+ * Clamped to [0.85, 1.0]
  */
-function vigMultiplier(direction, overOdds, underOdds) {
-  const relevantOdds = direction === 'over' ? overOdds : underOdds;
-  const marketProb = impliedProb(relevantOdds);
-  const raw = 1 - (marketProb - 0.5) * 2;
-  return Math.max(0.5, Math.min(1.2, raw));
+function vigMultiplier(overOdds, underOdds) {
+  const overProb = impliedProb(overOdds);
+  const underProb = impliedProb(underOdds);
+  const overround = overProb + underProb - 1;
+  return Math.max(0.85, Math.min(1.0, 1 - overround));
 }
 
 /**
  * Game confidence multiplier.
- * Linear ramp from 0 (tip-off) to 1 (player's full avg minutes played).
- * Early-game projections are mostly guesswork; late-game are near-certain.
+ * Based on game progress (0 at tip-off, 1 at end of regulation).
+ * Falls back to player minutes / avg if game progress unavailable.
  */
-function gameConfidence(minutesPlayed, avgMinutes) {
+function gameConfidence(minutesPlayed, avgMinutes, gameMinutesElapsed) {
+  // Prefer game clock progress (more reliable than player minutes vs avg)
+  if (gameMinutesElapsed && gameMinutesElapsed > 0) {
+    return Math.min(1, gameMinutesElapsed / 48);
+  }
   if (!avgMinutes || avgMinutes <= 0) return 0;
   return Math.min(1, minutesPlayed / avgMinutes);
 }
@@ -227,7 +282,7 @@ const PROP_TYPE_MAP = {
  * Applies game-confidence and vig adjustments to intensity.
  * Returns { projection: { value, direction, intensity } } or null.
  */
-export function getIndicators(propType, line, currentStat, minutesPlayed, seasonAvgs, l10Avgs, overOdds, underOdds) {
+export function getIndicators(propType, line, currentStat, minutesPlayed, seasonAvgs, l10Avgs, overOdds, underOdds, gameMinutesElapsed) {
   const mapping = PROP_TYPE_MAP[propType];
   if (!mapping) return null;
 
@@ -235,19 +290,28 @@ export function getIndicators(propType, line, currentStat, minutesPlayed, season
   const avgMinutes = seasonAvgs?.avgMinutes ?? null;
   const l10Avg = l10Avgs?.[mapping.l10] ?? null;
 
-  const projected = computeProjection(currentStat, minutesPlayed, avgMinutes, seasonAvg, l10Avg);
-  const signal = computeProjectionSignal(projected, line);
+  // Blended per-game average (same weights as blendedRate, but not per-minute)
+  const blendedAvg = l10Avg != null && seasonAvg != null
+    ? l10Avg * 0.6 + seasonAvg * 0.4
+    : l10Avg ?? seasonAvg;
+
+  const projected = computeProjection(currentStat, minutesPlayed, avgMinutes, seasonAvg, l10Avg, gameMinutesElapsed);
+  const signal = computeProjectionSignal(projected, line, blendedAvg);
+
+  // Capture raw intensity before adjustments for breakdown
+  const rawIntensity = signal?.intensity ?? 0;
+  const conf = signal ? gameConfidence(minutesPlayed, avgMinutes, gameMinutesElapsed) : 0;
+  const vig = signal ? vigMultiplier(overOdds, underOdds) : 1;
 
   // Apply confidence and vig adjustments
   if (signal) {
-    const conf = gameConfidence(minutesPlayed, avgMinutes);
-    const vig = vigMultiplier(signal.direction, overOdds, underOdds);
     signal.intensity = Math.min(1, signal.intensity * conf * vig);
 
     // Kill signal if adjusted intensity is negligible
     if (signal.intensity < 0.02) {
       return {
         projection: { value: projected != null ? Math.round(projected * 10) / 10 : null },
+        breakdown: { seasonAvg, l10Avg, blendedAvg, avgMinutes, minutesPlayed, rawIntensity, gameConf: conf, vigMult: vig },
       };
     }
   }
@@ -257,5 +321,6 @@ export function getIndicators(propType, line, currentStat, minutesPlayed, season
       value: projected != null ? Math.round(projected * 10) / 10 : null,
       ...(signal || {}),
     },
+    breakdown: { seasonAvg, l10Avg, blendedAvg, avgMinutes, minutesPlayed, rawIntensity, gameConf: conf, vigMult: vig },
   };
 }

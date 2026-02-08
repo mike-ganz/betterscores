@@ -45,6 +45,7 @@ function extractBestBets(allGameData) {
           intensity: signal.intensity,
           projected: signal.value,
           current: indicator.current,
+          breakdown: indicator.breakdown,
         });
       }
     }
@@ -52,7 +53,16 @@ function extractBestBets(allGameData) {
 
   // Sort by intensity descending, take top 10
   bets.sort((a, b) => b.intensity - a.intensity);
-  return bets.slice(0, 10);
+  const top = bets.slice(0, 10);
+
+  // Log distribution for debugging
+  const overs = top.filter(b => b.direction === 'over').length;
+  const unders = top.filter(b => b.direction === 'under').length;
+  if (top.length > 0) {
+    console.log(`[bestBets] Top ${top.length}: ${overs} overs, ${unders} unders (from ${bets.length} total signals across ${Object.keys(allGameData).length} games)`);
+  }
+
+  return top;
 }
 
 export const Bets = () => {
@@ -78,6 +88,8 @@ export const Bets = () => {
   }, []);
 
   const bestBets = extractBestBets(allGameData);
+  const hasLiveGames = games.some(g => g?.status?.type?.state === 'in');
+  const bestBetsLoading = !loading && hasLiveGames && bestBets.length === 0;
 
   return (
     <PageWrapper>
@@ -102,9 +114,9 @@ export const Bets = () => {
         ) : (
           <div className="space-y-12">
             {/* Best Bets — aggregated strongest signals */}
-            {bestBets.length > 0 && (
+            {(bestBets.length > 0 || bestBetsLoading) && (
               <section className="animate-slide-in">
-                <BestBetsSection bets={bestBets} />
+                <BestBetsSection bets={bestBets} loading={bestBetsLoading} />
               </section>
             )}
 

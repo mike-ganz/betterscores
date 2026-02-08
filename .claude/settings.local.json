@@ -42,7 +42,8 @@
       "WebFetch(domain:free-api.basketball)",
       "WebFetch(domain:api.statsbomb.com)",
       "WebFetch(domain:api.balldontlie.io)",
-      "WebFetch(domain:site.web.api.espn.com)"
+      "WebFetch(domain:site.web.api.espn.com)",
+      "Bash(del:*)"
     ]
   }
 }
