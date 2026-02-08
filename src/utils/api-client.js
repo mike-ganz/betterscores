@@ -162,6 +162,14 @@ export const espnAPI = {
     return data.winProbability || [];
   },
 
+  // Player game log (for last-10-game averages)
+  getPlayerGameLog: async (playerId) => {
+    const response = await fetch(
+      `https://site.web.api.espn.com/apis/common/v3/sports/basketball/nba/athletes/${playerId}/gamelog?region=us&lang=en`
+    );
+    return response.json();
+  },
+
   getPlayByPlay: async (league, gameId) => {
     const leaguePath = league === 'nba' ? 'nba' : 'mens-college-basketball';
     const response = await fetch(

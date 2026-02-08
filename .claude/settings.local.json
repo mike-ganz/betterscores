@@ -37,7 +37,12 @@
       "Bash(dir:*)",
       "Bash(npx:*)",
       "Bash(__NEW_LINE_e18c61c41de71d5e__ node -e \"\nconst fs = require\\(''fs''\\);\nconst j = JSON.parse\\(fs.readFileSync\\(process.env.TEMP + ''/fd_popular.json'',''utf8''\\)\\);\nconst markets = Object.values\\(j.attachments?.markets || {}\\);\nconsole.log\\(''Total markets in popular tab:'', markets.length\\);\nconst names = [...new Set\\(markets.map\\(m => m.marketName\\)\\)];\nconsole.log\\(''Market names:'', names\\);\n\")",
-      "Bash(__NEW_LINE_f8c375d4005fccb5__ node -e \"\nconst fs = require\\(''fs''\\);\nconst j = JSON.parse\\(fs.readFileSync\\(process.env.TEMP + ''/fd_all.json'',''utf8''\\)\\);\nconst markets = Object.values\\(j.attachments?.markets || {}\\);\nconsole.log\\(''Total markets in all tab:'', markets.length\\);\nconst names = [...new Set\\(markets.map\\(m => m.marketName\\)\\)];\nconsole.log\\(''All market names:''\\);\nnames.forEach\\(n => console.log\\('' -'', n\\)\\);\n\")"
+      "Bash(__NEW_LINE_f8c375d4005fccb5__ node -e \"\nconst fs = require\\(''fs''\\);\nconst j = JSON.parse\\(fs.readFileSync\\(process.env.TEMP + ''/fd_all.json'',''utf8''\\)\\);\nconst markets = Object.values\\(j.attachments?.markets || {}\\);\nconsole.log\\(''Total markets in all tab:'', markets.length\\);\nconst names = [...new Set\\(markets.map\\(m => m.marketName\\)\\)];\nconsole.log\\(''All market names:''\\);\nnames.forEach\\(n => console.log\\('' -'', n\\)\\);\n\")",
+      "WebFetch(domain:www.balldontlie.io)",
+      "WebFetch(domain:free-api.basketball)",
+      "WebFetch(domain:api.statsbomb.com)",
+      "WebFetch(domain:api.balldontlie.io)",
+      "WebFetch(domain:site.web.api.espn.com)"
     ]
   }
 }

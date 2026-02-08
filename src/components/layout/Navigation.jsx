@@ -37,6 +37,7 @@ export const Navigation = ({
   const navItems = [
     { to: '/', label: 'Scores' },
     { to: '/standings', label: 'Standings' },
+    { to: '/bets', label: 'Bets' },
   ];
 
   const leagues = [

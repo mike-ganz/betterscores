@@ -3,6 +3,7 @@ import { BrowserRouter as Router, Routes, Route } from 'react-router-dom';
 import { Navigation } from './components/layout/Navigation';
 import { Home } from './pages/Home';
 import { Standings } from './pages/Standings';
+import { Bets } from './pages/Bets';
 import { PlayerDetail } from './pages/PlayerDetail';
 import { TeamPage } from './pages/TeamPage';
 import CommandPalette from './components/ui/CommandPalette';
@@ -54,6 +55,7 @@ function App() {
               ncaamConference={ncaamConference}
             />
           } />
+          <Route path="/bets" element={<Bets />} />
           <Route path="/player/:id" element={<PlayerDetail />} />
           <Route path="/team/:league/:id" element={<TeamPage />} />
         </Routes>
