@@ -115,7 +115,7 @@ export const Bets = () => {
         <button
           onClick={handleRefresh}
           disabled={refreshing}
-          className="absolute top-0 right-0 p-2.5 rounded-lg text-slate-500 hover:text-slate-300 hover:bg-white/5 transition-colors disabled:opacity-50 cursor-pointer"
+          className="absolute top-0 right-0 z-10 p-2.5 rounded-lg text-slate-500 hover:text-slate-300 hover:bg-white/5 transition-colors disabled:opacity-50 cursor-pointer"
           title="Refresh all data"
         >
           <RefreshCw size={16} className={refreshing ? 'animate-spin' : ''} />
