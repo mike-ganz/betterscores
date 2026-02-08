@@ -4,7 +4,7 @@ import { usePlayerProps } from '../../hooks/usePlayerProps';
 import { usePropIndicators } from '../../hooks/usePropIndicators';
 import { PlayerPropsSection } from '../scores/PlayerPropsSection';
 
-export const BetsGameCard = ({ game, defaultExpanded = false, onIndicatorsReady }) => {
+export const BetsGameCard = ({ game, defaultExpanded = false, onIndicatorsReady, refreshKey = 0 }) => {
   const [expanded, setExpanded] = useState(defaultExpanded);
   const competition = game.competitions?.[0];
   const { competitors, status } = competition || {};
@@ -20,10 +20,11 @@ export const BetsGameCard = ({ game, defaultExpanded = false, onIndicatorsReady 
   const { data: propsData, loading: propsLoading, error: propsError } = usePlayerProps(
     home?.team?.shortDisplayName,
     away?.team?.shortDisplayName,
-    true
+    true,
+    refreshKey
   );
 
-  const { indicators } = usePropIndicators(game.id, 'nba', propsData, isLive);
+  const { indicators } = usePropIndicators(game.id, 'nba', propsData, isLive, refreshKey);
 
   // Report indicators up to parent for Best Bets aggregation
   // Only report when we have actual computed indicators (not the initial empty object)

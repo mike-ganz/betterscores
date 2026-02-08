@@ -77,7 +77,7 @@ export const mockOdds = {
       moneylineProbHome: calculateImpliedProbability(homeML),
       moneylineProbAway: calculateImpliedProbability(awayML),
       spread: spreadValue,
-      spreadDisplay: spreadValue > 0 ? `+${spreadValue}` : `${spreadValue}`,
+      spreadDisplay: `${-Math.abs(spreadValue)}`,
       overUnder: total,
       source: 'mock-data', // Indicates this is demo/MVP
     };
@@ -115,7 +115,7 @@ export const mockOdds = {
       moneylineProbHome: calculateImpliedProbability(moneylineHome),
       moneylineProbAway: calculateImpliedProbability(moneylineAway),
       spread,
-      spreadDisplay: spread > 0 ? `+${spread}` : `${spread}`,
+      spreadDisplay: `${-Math.abs(spread)}`,
       overUnder,
       // Pass through juice and line movement from core odds
       spreadOddsHome: espnOdds?.spreadOddsHome,

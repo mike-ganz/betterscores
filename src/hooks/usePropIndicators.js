@@ -114,7 +114,7 @@ function parseMinutes(raw) {
  * @param {boolean} isLive - Whether game is currently live
  * @returns {{ indicators: object, loading: boolean }}
  */
-export function usePropIndicators(gameId, league, propsData, isLive) {
+export function usePropIndicators(gameId, league, propsData, isLive, refreshKey = 0) {
   const [indicators, setIndicators] = useState({});
   const [loading, setLoading] = useState(false);
 
@@ -238,7 +238,7 @@ export function usePropIndicators(gameId, league, propsData, isLive) {
       cancelled = true;
       clearInterval(interval);
     };
-  }, [gameId, league, isLive, propsData]);
+  }, [gameId, league, isLive, propsData, refreshKey]);
 
   return { indicators, loading };
 }

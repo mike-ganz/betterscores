@@ -1,7 +1,7 @@
 import { useState, useEffect } from 'react';
 import { fdAPI } from '../utils/fd-client';
 
-export function usePlayerProps(homeTeam, awayTeam, enabled = true) {
+export function usePlayerProps(homeTeam, awayTeam, enabled = true, refreshKey = 0) {
   const [data, setData] = useState(null);
   const [loading, setLoading] = useState(false);
   const [error, setError] = useState(null);
@@ -29,7 +29,7 @@ export function usePlayerProps(homeTeam, awayTeam, enabled = true) {
 
     fetchProps();
     return () => { cancelled = true; };
-  }, [homeTeam, awayTeam, enabled]);
+  }, [homeTeam, awayTeam, enabled, refreshKey]);
 
   return { data, loading, error };
 }

@@ -20,6 +20,11 @@ function setCache(cache, key, data) {
   }
 }
 
+export function clearIndicatorCaches() {
+  seasonCache.clear();
+  gamelogCache.clear();
+}
+
 // ─── Data Fetching ───
 
 export async function fetchSeasonAvg(playerId) {

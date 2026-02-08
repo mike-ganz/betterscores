@@ -102,6 +102,10 @@ async function fetchTab(eventId, tab) {
   return parsed;
 }
 
+export function clearFdCache() {
+  clientCache.clear();
+}
+
 export const fdAPI = {
   // Main method: fetch all player props for a game
   // Pass ESPN team display names (e.g., "Thunder", "Rockets")

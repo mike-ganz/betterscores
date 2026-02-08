@@ -1,8 +1,11 @@
 import { useState, useCallback } from 'react';
+import { RefreshCw } from 'lucide-react';
 import { PageWrapper } from '../components/layout/PageWrapper';
 import { BetsGameCard } from '../components/bets/BetsGameCard';
 import { BestBetsSection } from '../components/bets/BestBetsSection';
 import { useScoreboard } from '../hooks/useBasketballData';
+import { clearFdCache } from '../utils/fd-client';
+import { clearIndicatorCaches } from '../utils/prop-indicators';
 import { format } from 'date-fns';
 
 const PROP_TYPES = ['points', 'rebounds', 'assists', 'threes'];
@@ -73,6 +76,20 @@ export const Bets = () => {
   const liveGames = games.filter(g => g?.status?.type?.state === 'in');
   const upcomingGames = games.filter(g => g?.status?.type?.state === 'pre');
 
+  // Refresh mechanism — incrementing key busts caches and re-triggers all hooks
+  const [refreshKey, setRefreshKey] = useState(0);
+  const [refreshing, setRefreshing] = useState(false);
+
+  const handleRefresh = useCallback(() => {
+    clearFdCache();
+    clearIndicatorCaches();
+    setAllGameData({});
+    setRefreshing(true);
+    setRefreshKey(k => k + 1);
+    // Reset spinning state after a short delay
+    setTimeout(() => setRefreshing(false), 1000);
+  }, []);
+
   // Collect indicator data from all game cards
   const [allGameData, setAllGameData] = useState({});
 
@@ -93,7 +110,17 @@ export const Bets = () => {
 
   return (
     <PageWrapper>
-      <div className="max-w-4xl mx-auto px-4 py-8">
+      <div className="max-w-4xl mx-auto px-4 py-8 relative">
+        {/* Refresh button — top right */}
+        <button
+          onClick={handleRefresh}
+          disabled={refreshing}
+          className="absolute top-8 right-4 p-2 rounded-lg text-slate-500 hover:text-slate-300 hover:bg-white/5 transition-colors disabled:opacity-50 cursor-pointer"
+          title="Refresh all data"
+        >
+          <RefreshCw size={16} className={refreshing ? 'animate-spin' : ''} />
+        </button>
+
         {loading ? (
           <div className="space-y-6">
             {[...Array(3)].map((_, i) => (
@@ -133,6 +160,7 @@ export const Bets = () => {
                       key={game.id}
                       game={game}
                       onIndicatorsReady={handleIndicatorsReady}
+                      refreshKey={refreshKey}
                     />
                   ))}
                 </div>
@@ -151,6 +179,7 @@ export const Bets = () => {
                       key={game.id}
                       game={game}
                       onIndicatorsReady={handleIndicatorsReady}
+                      refreshKey={refreshKey}
                     />
                   ))}
                 </div>

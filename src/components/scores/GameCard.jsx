@@ -138,7 +138,7 @@ export const GameCard = ({ game, league = 'nba' }) => {
                   <div>
                     <div className="text-[11px] text-slate-600 font-medium mb-1">Spread</div>
                     <div className="text-base font-bold text-white tabular-nums leading-tight">
-                      {displayOdds.spread > 0 ? `+${displayOdds.spread}` : displayOdds.spread}
+                      {-Math.abs(displayOdds.spread)}
                       {displayOdds.spreadOddsHome && <span className="text-[10px] font-medium text-slate-500 ml-1">({mockOdds.formatOdds(displayOdds.spreadOddsHome)})</span>}
                     </div>
                     <div className="text-[10px] text-slate-500 mt-1">{displayOdds.spread <= 0 ? home?.team?.abbreviation : away?.team?.abbreviation}</div>
