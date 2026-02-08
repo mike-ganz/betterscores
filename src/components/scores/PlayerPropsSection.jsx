@@ -61,42 +61,42 @@ const PropRow = ({ prop, indicator }) => {
   const hasCurrent = indicator?.current != null;
 
   return (
-    <div className="flex items-center justify-between py-2 px-3 bg-white/[0.02] rounded-lg border border-white/5 hover:border-white/10 transition-colors">
-      <div className="flex items-center gap-2.5 flex-1 min-w-0">
+    <div className="flex items-center justify-between py-1.5 px-2 sm:py-2 sm:px-3 bg-white/[0.02] rounded-lg border border-white/5 hover:border-white/10 transition-colors">
+      <div className="flex items-center gap-1.5 sm:gap-2.5 flex-1 min-w-0">
         {prop.headshot && (
           <img
             src={prop.headshot}
             alt=""
-            className="w-7 h-7 rounded-full flex-shrink-0 bg-slate-800"
+            className="w-6 h-6 sm:w-7 sm:h-7 rounded-full flex-shrink-0 bg-slate-800"
           />
         )}
-        <span className="text-sm font-semibold text-slate-100 truncate">
+        <span className="text-xs sm:text-sm font-semibold text-slate-100 truncate">
           {prop.playerName}
         </span>
       </div>
-      <div className="flex items-center gap-4 flex-shrink-0 ml-3">
+      <div className="flex items-center gap-2 sm:gap-4 flex-shrink-0 ml-2 sm:ml-3">
         {/* Current stat / Line */}
         <div className="text-center">
           {hasCurrent ? (
-            <div className="flex items-center gap-1.5">
-              <span className="text-sm font-bold text-blue-400 tabular-nums">{indicator.current}</span>
-              <span className="text-[10px] text-slate-600">/</span>
-              <span className="text-base font-bold text-white tabular-nums">{prop.line}</span>
+            <div className="flex items-center gap-1 sm:gap-1.5">
+              <span className="text-xs sm:text-sm font-bold text-blue-400 tabular-nums">{indicator.current}</span>
+              <span className="text-[9px] sm:text-[10px] text-slate-600">/</span>
+              <span className="text-sm sm:text-base font-bold text-white tabular-nums">{prop.line}</span>
             </div>
           ) : (
-            <div className="text-base font-bold text-white tabular-nums">
+            <div className="text-sm sm:text-base font-bold text-white tabular-nums">
               {prop.line}
             </div>
           )}
         </div>
-        <div className="flex gap-2 text-center">
-          <div className="min-w-[44px]">
-            <span className="text-xs font-bold text-emerald-400 tabular-nums">
+        <div className="flex gap-1.5 sm:gap-2 text-center">
+          <div className="min-w-[36px] sm:min-w-[44px]">
+            <span className="text-[10px] sm:text-xs font-bold text-emerald-400 tabular-nums">
               o{mockOdds.formatOdds(prop.overOdds)}
             </span>
           </div>
-          <div className="min-w-[44px]">
-            <span className="text-xs font-bold text-red-400 tabular-nums">
+          <div className="min-w-[36px] sm:min-w-[44px]">
+            <span className="text-[10px] sm:text-xs font-bold text-red-400 tabular-nums">
               u{mockOdds.formatOdds(prop.underOdds)}
             </span>
           </div>
@@ -115,8 +115,8 @@ const PropRow = ({ prop, indicator }) => {
 export const PlayerPropsSection = ({ propsData, loading, error, indicators }) => {
   if (loading) {
     return (
-      <div className="bg-white/[0.02] border border-white/5 rounded-xl p-5">
-        <h4 className="text-[9px] font-black text-slate-500 uppercase tracking-widest mb-4">
+      <div className="bg-white/[0.02] border border-white/5 rounded-xl p-3 sm:p-5">
+        <h4 className="text-[9px] font-black text-slate-500 uppercase tracking-widest mb-3 sm:mb-4">
           Player Props
         </h4>
         <div className="space-y-2">
@@ -137,7 +137,7 @@ export const PlayerPropsSection = ({ propsData, loading, error, indicators }) =>
   const hasIndicators = indicators && Object.keys(indicators).length > 0;
 
   return (
-    <div className="bg-white/[0.02] border border-white/5 rounded-xl p-5 space-y-4">
+    <div className="bg-white/[0.02] border border-white/5 rounded-xl p-3 sm:p-5 space-y-3 sm:space-y-4">
       <h4 className="text-[9px] font-black text-slate-500 uppercase tracking-widest flex items-center gap-2">
         Player Props
         <span className="text-[8px] bg-emerald-500/10 text-emerald-400 px-1.5 py-0.5 rounded">

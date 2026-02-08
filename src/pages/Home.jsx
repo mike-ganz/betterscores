@@ -33,9 +33,9 @@ export const Home = ({ league, selectedDate }) => {
 
   return (
     <PageWrapper>
-      <div className="max-w-6xl mx-auto px-4 py-8">
+      <div className="max-w-6xl mx-auto">
         {loading ? (
-          <div className="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-3 gap-6">
+          <div className="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-3 gap-4 sm:gap-6">
             {[...Array(6)].map((_, i) => <GameCardSkeleton key={i} />)}
           </div>
         ) : error ? (
@@ -43,14 +43,14 @@ export const Home = ({ league, selectedDate }) => {
             <span className="text-sm font-medium text-slate-400">{error}</span>
           </div>
         ) : (
-          <div className="space-y-12">
+          <div className="space-y-6 sm:space-y-8 md:space-y-12">
             {liveGames.length > 0 && (
               <section className="animate-slide-in">
-                <h2 className="text-xs font-black text-slate-500 uppercase tracking-[0.2em] mb-6 flex items-center gap-2">
+                <h2 className="text-xs font-black text-slate-500 uppercase tracking-wider sm:tracking-[0.2em] mb-4 sm:mb-6 flex items-center gap-2">
                   <span className="w-2 h-2 rounded-full bg-green-500 animate-pulse" />
                   Live Now
                 </h2>
-                <div className="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-3 gap-6">
+                <div className="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-3 gap-4 sm:gap-6">
                   {liveGames.map(game => (
                     <GameCard
                       key={game.id}
@@ -65,11 +65,11 @@ export const Home = ({ league, selectedDate }) => {
             )}
 
             <section className="animate-slide-in" style={{ animationDelay: '100ms' }}>
-              <h2 className="text-xs font-black text-slate-500 uppercase tracking-[0.2em] mb-6">
+              <h2 className="text-xs font-black text-slate-500 uppercase tracking-wider sm:tracking-[0.2em] mb-4 sm:mb-6">
                 {liveGames.length > 0 ? 'Upcoming & Final' : 'Games'}
               </h2>
               {sortedOther.length > 0 ? (
-                <div className="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-3 gap-6">
+                <div className="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-3 gap-4 sm:gap-6">
                   {sortedOther.map(game => (
                     <GameCard
                       key={game.id}

@@ -25,7 +25,7 @@ export default function MomentumSparkline({ plays, homeId }) {
   }).join(' ');
 
   return (
-    <div className="flex flex-col items-end gap-1 opacity-0 group-hover:opacity-100 transition-all duration-500 translate-y-1 group-hover:translate-y-0">
+    <div className="flex flex-col items-end gap-1 opacity-60 sm:opacity-0 sm:group-hover:opacity-100 transition-all duration-500 sm:translate-y-1 sm:group-hover:translate-y-0">
       <svg width={width} height={height} className="overflow-visible">
         {/* Baseline */}
         <line x1="0" y1={height/2} x2={width} y2={height/2} stroke="currentColor" className="text-white/5" strokeWidth="1" strokeDasharray="2,2" />

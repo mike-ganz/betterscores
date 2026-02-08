@@ -1,6 +1,6 @@
 import { useState } from 'react';
 import { NavLink, useLocation } from 'react-router-dom';
-import { Calendar } from 'lucide-react';
+import { Calendar, Menu, X } from 'lucide-react';
 import { format, addDays, subDays, isSameDay } from 'date-fns';
 
 const MAJOR_CONFERENCES = [
@@ -29,6 +29,7 @@ export const Navigation = ({
 }) => {
   const location = useLocation();
   const [calendarOpen, setCalendarOpen] = useState(false);
+  const [mobileMenuOpen, setMobileMenuOpen] = useState(false);
 
   const isScores = location.pathname === '/';
   const isStandings = location.pathname === '/standings';
@@ -92,7 +93,7 @@ export const Navigation = ({
             {calendarOpen && (
               <div
                 className="absolute top-full mt-2 right-0 z-50 bg-[#12151c] border border-white/10 rounded-2xl shadow-2xl"
-                style={{ display: 'grid', gridTemplateColumns: 'repeat(7, 40px)', gap: '4px', padding: '12px', width: 'max-content' }}
+                style={{ display: 'grid', gridTemplateColumns: 'repeat(7, clamp(32px, 8vw, 40px))', gap: '4px', padding: '12px', maxWidth: 'calc(100vw - 2rem)' }}
               >
                 {Array.from({ length: 14 }).map((_, i) => {
                   const date = addDays(subDays(new Date(), 7), i);
@@ -106,7 +107,7 @@ export const Navigation = ({
                           ? 'bg-blue-600 text-white'
                           : 'hover:bg-white/5 text-slate-400'
                       }`}
-                      style={{ width: '40px', height: '48px' }}
+                      style={{ width: 'clamp(32px, 8vw, 40px)', height: 'clamp(40px, 10vw, 48px)' }}
                     >
                       <span style={{ fontSize: '9px' }} className="uppercase font-black opacity-40">
                         {format(date, 'EEE')}
@@ -162,20 +163,138 @@ export const Navigation = ({
     return null;
   };
 
+  // Mobile-specific filter rendering (stacked layout)
+  const renderMobileFilters = () => {
+    if (!showFilters) return null;
+
+    return (
+      <div className="space-y-3">
+        {/* League Toggle */}
+        <div className="flex items-center gap-1 bg-[#12151c] border border-white/5 rounded-xl p-1">
+          {leagues.map(({ key, label }) => (
+            <button
+              key={key}
+              onClick={() => { onLeagueChange(key); }}
+              className={`flex-1 px-3 py-2 rounded-lg text-xs font-bold uppercase tracking-widest transition-all ${
+                league === key
+                  ? 'bg-blue-600 text-white shadow-[0_0_20px_rgba(59,130,246,0.3)]'
+                  : 'text-slate-400'
+              }`}
+            >
+              {label}
+            </button>
+          ))}
+        </div>
+
+        {/* Context filters */}
+        {isScores && (
+          <div className="flex items-center gap-1 bg-[#12151c] border border-white/5 rounded-xl p-1">
+            {quickDates.map(({ label, date }) => {
+              const isSelected = isSameDay(date, selectedDate);
+              return (
+                <button
+                  key={label}
+                  onClick={() => { handleDateClick(date); }}
+                  className={`flex-1 px-2 py-2 rounded-lg text-xs font-semibold transition-all ${
+                    isSelected
+                      ? 'bg-white/10 text-white'
+                      : 'text-slate-400'
+                  }`}
+                >
+                  {label}
+                </button>
+              );
+            })}
+            <button
+              onClick={() => setCalendarOpen(!calendarOpen)}
+              className={`px-3 py-2 rounded-lg transition-all ${
+                calendarOpen ? 'bg-white/10 text-blue-400' : 'text-slate-500'
+              }`}
+            >
+              <Calendar size={14} />
+            </button>
+          </div>
+        )}
+
+        {isScores && calendarOpen && (
+          <div
+            className="bg-[#12151c] border border-white/10 rounded-2xl shadow-2xl mx-auto"
+            style={{ display: 'grid', gridTemplateColumns: 'repeat(7, 1fr)', gap: '4px', padding: '12px', maxWidth: '100%' }}
+          >
+            {Array.from({ length: 14 }).map((_, i) => {
+              const date = addDays(subDays(new Date(), 7), i);
+              const isSelected = isSameDay(date, selectedDate);
+              return (
+                <button
+                  key={i}
+                  onClick={() => { handleDateClick(date); setMobileMenuOpen(false); }}
+                  className={`flex flex-col items-center justify-center rounded-lg transition-all py-2 ${
+                    isSelected
+                      ? 'bg-blue-600 text-white'
+                      : 'hover:bg-white/5 text-slate-400'
+                  }`}
+                >
+                  <span className="text-[9px] uppercase font-black opacity-40">
+                    {format(date, 'EEE')}
+                  </span>
+                  <span className="text-sm font-bold leading-tight mt-0.5">
+                    {format(date, 'd')}
+                  </span>
+                </button>
+              );
+            })}
+          </div>
+        )}
+
+        {isStandings && (
+          <div className="flex items-center gap-1 bg-[#12151c] border border-white/5 rounded-xl p-1">
+            {isNcaam ? (
+              <select
+                value={ncaamConference}
+                onChange={(e) => { onNcaamConferenceChange(e.target.value); setMobileMenuOpen(false); }}
+                className="w-full bg-white/5 border border-white/10 rounded-lg px-3 py-2 text-xs font-semibold text-slate-200 outline-none focus:border-blue-500/50 cursor-pointer"
+              >
+                {MAJOR_CONFERENCES.map((conf) => (
+                  <option key={conf.value} value={conf.value} className="bg-[#12151c] text-slate-200">
+                    {conf.name}
+                  </option>
+                ))}
+              </select>
+            ) : (
+              ['eastern', 'western'].map((conf) => (
+                <button
+                  key={conf}
+                  onClick={() => { onNbaConferenceChange(conf); }}
+                  className={`flex-1 px-3 py-2 rounded-lg text-xs font-semibold transition-all capitalize ${
+                    nbaConference === conf
+                      ? 'bg-white/10 text-white'
+                      : 'text-slate-400'
+                  }`}
+                >
+                  {conf}
+                </button>
+              ))
+            )}
+          </div>
+        )}
+      </div>
+    );
+  };
+
   return (
     <nav className="sticky top-0 z-50 glass-panel border-b border-white/5">
-      <div className="max-w-7xl mx-auto px-6">
-        <div className="flex items-center justify-between h-16">
+      <div className="max-w-7xl mx-auto px-4 sm:px-6">
+        <div className="flex items-center justify-between h-14 sm:h-16">
           {/* Logo */}
           <div className="flex items-center">
-            <h1 className="text-xl font-semibold text-slate-100 tracking-tight">
+            <h1 className="text-lg sm:text-xl font-semibold text-slate-100 tracking-tight">
               Courtside
             </h1>
           </div>
 
-          {/* Center: Filter Bar */}
+          {/* Center: Filter Bar — desktop only */}
           {showFilters && (
-            <div className="flex items-center bg-[#12151c] border border-white/5 rounded-xl p-1">
+            <div className="hidden sm:flex items-center bg-[#12151c] border border-white/5 rounded-xl p-1">
               {/* League Toggle */}
               {leagues.map(({ key, label }) => (
                 <button
@@ -196,8 +315,8 @@ export const Navigation = ({
             </div>
           )}
 
-          {/* Nav Items */}
-          <div className="flex gap-8" data-test="nav-links">
+          {/* Nav Items — desktop only */}
+          <div className="hidden sm:flex gap-8" data-test="nav-links">
             {navItems.map(({ to, label }) => (
               <NavLink
                 key={to}
@@ -221,8 +340,46 @@ export const Navigation = ({
               </NavLink>
             ))}
           </div>
+
+          {/* Hamburger — mobile only */}
+          <button
+            className="sm:hidden p-2 -mr-2 text-slate-400 hover:text-slate-200 transition-colors"
+            onClick={() => setMobileMenuOpen(!mobileMenuOpen)}
+          >
+            {mobileMenuOpen ? <X size={20} /> : <Menu size={20} />}
+          </button>
         </div>
       </div>
+
+      {/* Mobile Menu Panel */}
+      {mobileMenuOpen && (
+        <div className="sm:hidden border-t border-white/5 bg-[#0a0e1a]/95 backdrop-blur-sm">
+          <div className="px-4 py-3 space-y-3">
+            {/* Nav Links */}
+            <div className="flex gap-1 bg-[#12151c] border border-white/5 rounded-xl p-1">
+              {navItems.map(({ to, label }) => (
+                <NavLink
+                  key={to}
+                  to={to}
+                  onClick={() => setMobileMenuOpen(false)}
+                  className={({ isActive }) =>
+                    `flex-1 text-center px-3 py-2 rounded-lg text-xs font-semibold transition-all ${
+                      isActive
+                        ? 'bg-white/10 text-white'
+                        : 'text-slate-400'
+                    }`
+                  }
+                >
+                  {label}
+                </NavLink>
+              ))}
+            </div>
+
+            {/* Filters */}
+            {renderMobileFilters()}
+          </div>
+        </div>
+      )}
     </nav>
   );
 };

@@ -64,13 +64,13 @@ export const GameCard = ({ game, league = 'nba' }) => {
   return (
     <>
       <div 
-        className="group relative rounded-lg transition-all duration-300 bg-gradient-to-br from-[#0f1117] to-[#0a0e27] border border-white/8 cursor-pointer hover:border-white/15 hover:shadow-lg hover:shadow-blue-500/10 hover:scale-105"
+        className="group relative rounded-lg transition-all duration-300 bg-gradient-to-br from-[#0f1117] to-[#0a0e27] border border-white/8 cursor-pointer hover:border-white/15 hover:shadow-lg hover:shadow-blue-500/10 sm:hover:scale-105 active:scale-[0.98] active:opacity-90"
         style={{
           backgroundImage: `linear-gradient(135deg, rgba(255,255,255,0.02) 0%, rgba(255,255,255,0) 100%)`
         }}
       >
-        <div className="p-6" onClick={handleExpandClick}>
-          <div className="flex justify-between items-start mb-5">
+        <div className="p-4 sm:p-6" onClick={handleExpandClick}>
+          <div className="flex justify-between items-start mb-4 sm:mb-5">
             <div className="flex flex-col gap-1">
                <span className="text-[13px] text-slate-400 font-semibold uppercase tracking-wider letter-spacing-1">{statusDetail}</span>
                {importanceScore >= 5 && (
@@ -87,14 +87,14 @@ export const GameCard = ({ game, league = 'nba' }) => {
                   className="flex items-center gap-3 flex-1"
                 >
                    <div className="relative">
-                     <img src={team?.team?.logo} className="w-11 h-11 object-contain filter drop-shadow-lg" />
+                     <img src={team?.team?.logo} className="w-9 h-9 sm:w-11 sm:h-11 object-contain filter drop-shadow-lg" />
                    </div>
                    <div className="flex flex-col min-w-0">
                       <span className="text-base font-bold text-white uppercase tracking-tight leading-tight">{team?.team?.abbreviation}</span>
                       <span className="text-[11px] text-slate-400 font-medium">{team?.records?.[0]?.summary}</span>
                    </div>
                 </div>
-                <div className={`text-3xl font-bold tabular-nums ml-3 ${parseInt(team?.score) > parseInt((team === home ? away : home)?.score) ? 'text-blue-400' : 'text-slate-100'}`}>
+                <div className={`text-2xl sm:text-3xl font-bold tabular-nums ml-2 sm:ml-3 ${parseInt(team?.score) > parseInt((team === home ? away : home)?.score) ? 'text-blue-400' : 'text-slate-100'}`}>
                    {team?.score}
                 </div>
               </div>
@@ -130,11 +130,11 @@ export const GameCard = ({ game, league = 'nba' }) => {
             );
             const isLiveOdds = coreOdds?.isLive && isLive;
             return (
-              <div className="mt-5 pt-4 border-t border-white/10">
-                <div className="text-[13px] text-slate-500 uppercase font-semibold tracking-wider mb-2">
+              <div className="mt-4 pt-3 sm:mt-5 sm:pt-4 border-t border-white/10">
+                <div className="text-[12px] sm:text-[13px] text-slate-500 uppercase font-semibold tracking-wider mb-2">
                   {isLiveOdds ? 'Live Line' : 'Vegas Line'}
                 </div>
-                <div className="grid grid-cols-3 gap-3 text-center">
+                <div className="grid grid-cols-3 gap-2 sm:gap-3 text-center">
                   <div>
                     <div className="text-[11px] text-slate-600 font-medium mb-1">Spread</div>
                     <div className="text-base font-bold text-white tabular-nums leading-tight">

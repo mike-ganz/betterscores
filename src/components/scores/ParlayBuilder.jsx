@@ -13,7 +13,7 @@ export const ParlayBuilder = ({ selectedGames, onAddGame, onRemoveGame }) => {
   const potentialPayout = mockBet * (1 + parlayOdds);
 
   return (
-    <div className="fixed bottom-6 right-6 z-40 max-w-xs">
+    <div className="fixed bottom-4 left-3 right-3 sm:bottom-6 sm:left-auto sm:right-6 z-40 sm:max-w-xs">
       <div className="bg-gradient-to-br from-blue-600/95 to-blue-700/95 backdrop-blur-sm rounded-lg border border-blue-400/20 shadow-2xl p-4">
         <div className="flex items-center justify-between mb-3">
           <h3 className="text-sm font-bold uppercase tracking-wider text-white">

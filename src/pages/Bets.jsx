@@ -110,12 +110,12 @@ export const Bets = () => {
 
   return (
     <PageWrapper>
-      <div className="max-w-4xl mx-auto px-4 py-8 relative">
+      <div className="max-w-4xl mx-auto relative">
         {/* Refresh button — top right */}
         <button
           onClick={handleRefresh}
           disabled={refreshing}
-          className="absolute top-8 right-4 p-2 rounded-lg text-slate-500 hover:text-slate-300 hover:bg-white/5 transition-colors disabled:opacity-50 cursor-pointer"
+          className="absolute top-0 right-0 p-2.5 rounded-lg text-slate-500 hover:text-slate-300 hover:bg-white/5 transition-colors disabled:opacity-50 cursor-pointer"
           title="Refresh all data"
         >
           <RefreshCw size={16} className={refreshing ? 'animate-spin' : ''} />
@@ -139,7 +139,7 @@ export const Bets = () => {
             <span className="text-sm font-medium text-slate-400">{error}</span>
           </div>
         ) : (
-          <div className="space-y-12">
+          <div className="space-y-6 sm:space-y-8 md:space-y-12">
             {/* Best Bets — aggregated strongest signals */}
             {(bestBets.length > 0 || bestBetsLoading) && (
               <section className="animate-slide-in">
@@ -150,7 +150,7 @@ export const Bets = () => {
             {/* Live Games */}
             {liveGames.length > 0 && (
               <section className="animate-slide-in">
-                <h2 className="text-xs font-black text-slate-500 uppercase tracking-[0.2em] mb-6 flex items-center gap-2">
+                <h2 className="text-xs font-black text-slate-500 uppercase tracking-wider sm:tracking-[0.2em] mb-4 sm:mb-6 flex items-center gap-2">
                   <span className="w-2 h-2 rounded-full bg-green-500 animate-pulse" />
                   Live Props
                 </h2>
@@ -170,7 +170,7 @@ export const Bets = () => {
             {/* Upcoming Games */}
             {upcomingGames.length > 0 && (
               <section className="animate-slide-in" style={{ animationDelay: '100ms' }}>
-                <h2 className="text-xs font-black text-slate-500 uppercase tracking-[0.2em] mb-6">
+                <h2 className="text-xs font-black text-slate-500 uppercase tracking-wider sm:tracking-[0.2em] mb-4 sm:mb-6">
                   Upcoming
                 </h2>
                 <div className="space-y-4">

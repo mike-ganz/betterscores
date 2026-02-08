@@ -23,28 +23,28 @@ export const StandingsTable = ({ teams, showRank = false, showPlayoffLines = fal
           <thead className="bg-white/5 border-b border-white/10">
             <tr>
               {!showRank && (
-                <th className="px-4 py-3 text-left text-xs font-medium text-slate-400 w-12">
+                <th className="px-2 py-2 sm:px-4 sm:py-3 text-left text-xs font-medium text-slate-400 w-10 sm:w-12">
                   #
                 </th>
               )}
               {showRank && (
-                <th className="px-4 py-3 text-left text-xs font-medium text-slate-400">
+                <th className="px-2 py-2 sm:px-4 sm:py-3 text-left text-xs font-medium text-slate-400">
                   Rank
                 </th>
               )}
-              <th className="px-4 py-3 text-left text-xs font-medium text-slate-400">
+              <th className="px-2 py-2 sm:px-4 sm:py-3 text-left text-xs font-medium text-slate-400">
                 Team
               </th>
-              <th className="px-4 py-3 text-center text-xs font-medium text-slate-400">
+              <th className="px-2 py-2 sm:px-4 sm:py-3 text-center text-xs font-medium text-slate-400">
                 W
               </th>
-              <th className="px-4 py-3 text-center text-xs font-medium text-slate-400">
+              <th className="px-2 py-2 sm:px-4 sm:py-3 text-center text-xs font-medium text-slate-400">
                 L
               </th>
-              <th className="px-4 py-3 text-center text-xs font-medium text-slate-400">
+              <th className="px-2 py-2 sm:px-4 sm:py-3 text-center text-xs font-medium text-slate-400 hidden sm:table-cell">
                 PCT
               </th>
-              <th className="px-4 py-3 text-center text-xs font-medium text-slate-400">
+              <th className="px-2 py-2 sm:px-4 sm:py-3 text-center text-xs font-medium text-slate-400 hidden sm:table-cell">
                 GB
               </th>
             </tr>
@@ -61,12 +61,12 @@ export const StandingsTable = ({ teams, showRank = false, showPlayoffLines = fal
                     className="transition-colors hover:bg-white/5"
                   >
                     {!showRank && (
-                      <td className="px-4 py-3 text-center font-medium text-slate-400">
+                      <td className="px-2 py-2 sm:px-4 sm:py-3 text-center font-medium text-slate-400">
                         {index + 1}
                       </td>
                     )}
                     {showRank && (
-                      <td className="px-4 py-3">
+                      <td className="px-2 py-2 sm:px-4 sm:py-3">
                         {team.team?.rank || team.current ? (
                           <Badge variant="ranked">#{team.team?.rank || team.current}</Badge>
                         ) : (
@@ -74,39 +74,39 @@ export const StandingsTable = ({ teams, showRank = false, showPlayoffLines = fal
                         )}
                       </td>
                     )}
-                    <td className="px-4 py-3">
-                      <div className="flex items-center gap-3">
+                    <td className="px-2 py-2 sm:px-4 sm:py-3">
+                      <div className="flex items-center gap-2 sm:gap-3">
                         {team.team?.logos?.[0]?.href && (
                           <img
                             src={team.team.logos[0].href}
                             alt={team.team.displayName}
-                            className="w-8 h-8 object-contain"
+                            className="w-6 h-6 sm:w-8 sm:h-8 object-contain flex-shrink-0"
                           />
                         )}
-                        <div>
-                          <div className="font-medium text-slate-100">
+                        <div className="min-w-0">
+                          <div className="font-medium text-slate-100 text-sm sm:text-base truncate">
                             {team.team?.shortDisplayName || team.team?.displayName}
                           </div>
                           {team.team?.abbreviation && (
-                            <div className="text-xs text-white/50">
+                            <div className="text-[10px] sm:text-xs text-white/50 hidden sm:block">
                               {team.team.abbreviation}
                             </div>
                           )}
                         </div>
                       </div>
                     </td>
-                    <td className="px-4 py-3 text-center font-medium text-slate-100">
-                      {team.stats?.find(s => s.name === 'wins' || s.abbreviation === 'W')?.value || 
+                    <td className="px-2 py-2 sm:px-4 sm:py-3 text-center font-medium text-slate-100 text-sm">
+                      {team.stats?.find(s => s.name === 'wins' || s.abbreviation === 'W')?.value ||
                        team.recordSummary?.split('-')[0] || '-'}
                     </td>
-                    <td className="px-4 py-3 text-center font-medium text-slate-100">
+                    <td className="px-2 py-2 sm:px-4 sm:py-3 text-center font-medium text-slate-100 text-sm">
                       {team.stats?.find(s => s.name === 'losses' || s.abbreviation === 'L')?.value ||
                        team.recordSummary?.split('-')[1] || '-'}
                     </td>
-                    <td className="px-4 py-3 text-center text-slate-400">
+                    <td className="px-2 py-2 sm:px-4 sm:py-3 text-center text-slate-400 hidden sm:table-cell">
                       {team.stats?.find(s => s.name === 'winPercent' || s.abbreviation === 'PCT')?.displayValue || '-'}
                     </td>
-                    <td className="px-4 py-3 text-center text-slate-400">
+                    <td className="px-2 py-2 sm:px-4 sm:py-3 text-center text-slate-400 hidden sm:table-cell">
                       {team.stats?.find(s => s.name === 'gamesBehind' || s.abbreviation === 'GB')?.displayValue || '-'}
                     </td>
                   </tr>

@@ -70,42 +70,42 @@ export const TeamPage = () => {
   return (
     <PageWrapper>
       {/* Team Header */}
-      <div className="mb-8">
-        <div className="flex items-center gap-4 mb-4">
+      <div className="mb-6 sm:mb-8">
+        <div className="flex flex-col sm:flex-row items-center sm:items-start gap-3 sm:gap-4 mb-4 text-center sm:text-left">
           {team?.logos?.[0]?.href && (
-            <img 
-              src={team.logos[0].href} 
+            <img
+              src={team.logos[0].href}
               alt={team.displayName}
-              className="w-16 h-16 object-contain"
+              className="w-12 h-12 sm:w-16 sm:h-16 object-contain flex-shrink-0"
             />
           )}
           <div>
-            <h1 className="text-3xl font-semibold text-slate-100 mb-1">
+            <h1 className="text-xl sm:text-2xl md:text-3xl font-semibold text-slate-100 mb-1">
               {team?.displayName}
             </h1>
-            <p className="text-sm text-slate-400">{team?.standingSummary}</p>
+            <p className="text-xs sm:text-sm text-slate-400">{team?.standingSummary}</p>
           </div>
         </div>
 
         {/* Team Stats Overview */}
-        <div className="grid grid-cols-2 md:grid-cols-4 gap-4">
-          <div className="bg-[#12151c] border border-white/10 rounded-lg p-4">
+        <div className="grid grid-cols-2 md:grid-cols-4 gap-2 sm:gap-3 md:gap-4">
+          <div className="bg-[#12151c] border border-white/10 rounded-lg p-3 sm:p-4">
             <div className="text-xs text-slate-400 mb-1">Record</div>
-            <div className="text-2xl font-semibold text-slate-100">{overallRecord}</div>
+            <div className="text-xl sm:text-2xl font-semibold text-slate-100">{overallRecord}</div>
           </div>
-          <div className="bg-[#12151c] border border-white/10 rounded-lg p-4">
+          <div className="bg-[#12151c] border border-white/10 rounded-lg p-3 sm:p-4">
             <div className="text-xs text-slate-400 mb-1">Streak</div>
-            <div className={`text-2xl font-semibold ${streakValue && streakValue > 0 ? 'text-green-400' : 'text-red-400'}`}>
+            <div className={`text-xl sm:text-2xl font-semibold ${streakValue && streakValue > 0 ? 'text-green-400' : 'text-red-400'}`}>
               {streakDisplay}
             </div>
           </div>
-          <div className="bg-[#12151c] border border-white/10 rounded-lg p-4">
+          <div className="bg-[#12151c] border border-white/10 rounded-lg p-3 sm:p-4">
             <div className="text-xs text-slate-400 mb-1">PPG</div>
-            <div className="text-2xl font-semibold text-slate-100">{ppg}</div>
+            <div className="text-xl sm:text-2xl font-semibold text-slate-100">{ppg}</div>
           </div>
-          <div className="bg-[#12151c] border border-white/10 rounded-lg p-4">
+          <div className="bg-[#12151c] border border-white/10 rounded-lg p-3 sm:p-4">
             <div className="text-xs text-slate-400 mb-1">Opp PPG</div>
-            <div className="text-2xl font-semibold text-slate-100">{oppPpg}</div>
+            <div className="text-xl sm:text-2xl font-semibold text-slate-100">{oppPpg}</div>
           </div>
         </div>
 
@@ -121,51 +121,51 @@ export const TeamPage = () => {
 
       {/* Roster */}
       <div>
-        <h2 className="text-xl font-semibold text-slate-100 mb-4">Roster</h2>
+        <h2 className="text-lg sm:text-xl font-semibold text-slate-100 mb-4">Roster</h2>
         <div className="bg-[#12151c] border border-white/10 rounded-lg overflow-hidden">
           <div className="overflow-x-auto">
             <table className="w-full">
               <thead className="bg-white/5 border-b border-white/10">
                 <tr>
-                  <th className="px-4 py-3 text-left text-xs font-medium text-slate-400">#</th>
-                  <th className="px-4 py-3 text-left text-xs font-medium text-slate-400">Player</th>
-                  <th className="px-4 py-3 text-left text-xs font-medium text-slate-400">Pos</th>
-                  <th className="px-4 py-3 text-left text-xs font-medium text-slate-400">Exp</th>
-                  <th className="px-4 py-3 text-left text-xs font-medium text-slate-400">College</th>
+                  <th className="px-2 py-2 sm:px-4 sm:py-3 text-left text-xs font-medium text-slate-400">#</th>
+                  <th className="px-2 py-2 sm:px-4 sm:py-3 text-left text-xs font-medium text-slate-400">Player</th>
+                  <th className="px-2 py-2 sm:px-4 sm:py-3 text-left text-xs font-medium text-slate-400">Pos</th>
+                  <th className="px-2 py-2 sm:px-4 sm:py-3 text-left text-xs font-medium text-slate-400 hidden sm:table-cell">Exp</th>
+                  <th className="px-2 py-2 sm:px-4 sm:py-3 text-left text-xs font-medium text-slate-400 hidden sm:table-cell">College</th>
                 </tr>
               </thead>
               <tbody className="divide-y divide-white/5">
                 {players.map((player) => (
-                  <tr 
-                    key={player.id} 
+                  <tr
+                    key={player.id}
                     className="transition-colors hover:bg-white/5 cursor-pointer"
                     onClick={() => navigate(`/player/${player.id}`)}
                   >
-                    <td className="px-4 py-3 text-sm text-slate-300">{player.jersey || '-'}</td>
-                    <td className="px-4 py-3">
-                      <div className="flex items-center gap-3">
+                    <td className="px-2 py-2 sm:px-4 sm:py-3 text-sm text-slate-300">{player.jersey || '-'}</td>
+                    <td className="px-2 py-2 sm:px-4 sm:py-3">
+                      <div className="flex items-center gap-2 sm:gap-3">
                         {player.headshot?.href && (
-                          <img 
-                            src={player.headshot.href} 
+                          <img
+                            src={player.headshot.href}
                             alt={player.displayName}
-                            className="w-10 h-10 rounded-full object-cover bg-slate-800"
+                            className="w-8 h-8 sm:w-10 sm:h-10 rounded-full object-cover bg-slate-800 flex-shrink-0"
                           />
                         )}
-                        <div>
-                          <div className="text-sm font-medium text-slate-100 hover:text-blue-400 transition-colors">
+                        <div className="min-w-0">
+                          <div className="text-xs sm:text-sm font-medium text-slate-100 hover:text-blue-400 transition-colors truncate">
                             {player.displayName}
                           </div>
-                          <div className="text-xs text-slate-500">
+                          <div className="text-[10px] sm:text-xs text-slate-500">
                             {player.displayHeight} • {player.displayWeight}
                           </div>
                         </div>
                       </div>
                     </td>
-                    <td className="px-4 py-3 text-sm text-slate-300">{player.position?.abbreviation || '-'}</td>
-                    <td className="px-4 py-3 text-sm text-slate-300">
+                    <td className="px-2 py-2 sm:px-4 sm:py-3 text-xs sm:text-sm text-slate-300">{player.position?.abbreviation || '-'}</td>
+                    <td className="px-2 py-2 sm:px-4 sm:py-3 text-sm text-slate-300 hidden sm:table-cell">
                       {player.experience?.years ? `${player.experience.years}y` : 'R'}
                     </td>
-                    <td className="px-4 py-3 text-sm text-slate-400">{player.college?.shortName || '-'}</td>
+                    <td className="px-2 py-2 sm:px-4 sm:py-3 text-sm text-slate-400 hidden sm:table-cell">{player.college?.shortName || '-'}</td>
                   </tr>
                 ))}
               </tbody>

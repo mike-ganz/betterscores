@@ -64,24 +64,24 @@ export const PlayerDetail = () => {
 
   return (
     <PageWrapper>
-      <div className="bg-[#12151c] rounded-lg border border-white/5 p-8 mb-8 relative overflow-hidden shadow-2xl">
+      <div className="bg-[#12151c] rounded-lg border border-white/5 p-4 sm:p-6 md:p-8 mb-4 sm:mb-6 md:mb-8 relative overflow-hidden shadow-2xl">
         {/* Background glow for player header */}
         <div className="absolute top-0 right-0 w-64 h-64 bg-blue-500/5 blur-[100px] -translate-y-1/2 translate-x-1/2" />
-        
-        <div className="flex flex-col md:flex-row items-center gap-8 relative z-10 text-center md:text-left">
+
+        <div className="flex flex-col md:flex-row items-center gap-4 sm:gap-6 md:gap-8 relative z-10 text-center md:text-left">
           {athlete.headshot && (
             <div className="relative">
               <div className="absolute inset-0 bg-blue-500/20 blur-2xl rounded-full" />
               <img
                 src={athlete.headshot.href}
                 alt={athlete.fullName}
-                className="w-32 h-32 rounded-full border-4 border-[#1a1e26] object-cover relative z-10 drop-shadow-2xl"
+                className="w-20 h-20 sm:w-28 sm:h-28 md:w-32 md:h-32 rounded-full border-4 border-[#1a1e26] object-cover relative z-10 drop-shadow-2xl"
               />
             </div>
           )}
           <div>
             <div className="flex flex-wrap justify-center md:justify-start items-center gap-3 mb-2">
-              <h2 className="text-4xl font-black text-slate-100 tracking-tight">
+              <h2 className="text-2xl sm:text-3xl md:text-4xl font-black text-slate-100 tracking-tight">
                 {athlete.fullName}
               </h2>
               <div className="px-2 py-1 rounded bg-slate-800 text-xs font-black text-slate-400">
@@ -102,7 +102,7 @@ export const PlayerDetail = () => {
       </div>
       
       {/* Bento Box Layout */}
-      <div className="grid grid-cols-2 md:grid-cols-6 gap-5 mb-10">
+      <div className="grid grid-cols-2 md:grid-cols-6 gap-3 sm:gap-4 md:gap-5 mb-6 sm:mb-8 md:mb-10">
         {/* Hero Stats - Large cards spanning 2 columns */}
         <StatCard 
           variant="hero" 
@@ -135,7 +135,7 @@ export const PlayerDetail = () => {
       </div>
 
       {/* Future Enhancement: Game Logs */}
-      <div className="bg-[#12151c]/50 rounded-lg border border-white/5 border-dashed p-10 text-center">
+      <div className="bg-[#12151c]/50 rounded-lg border border-white/5 border-dashed p-6 sm:p-10 text-center">
         <p className="text-slate-600 font-bold uppercase tracking-[0.2em] text-xs">Game logs coming soon</p>
       </div>
     </PageWrapper>

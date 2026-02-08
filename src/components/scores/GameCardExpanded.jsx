@@ -124,13 +124,13 @@ export const GameCardExpanded = ({ game, league = 'nba', onClose }) => {
         </div>
 
         {/* Info Grid (Scrollable Content) */}
-        <div className="overflow-y-auto flex-1 p-4 sm:p-6 space-y-6" style={{ WebkitOverflowScrolling: 'touch' }}>
+        <div className="overflow-y-auto flex-1 p-4 sm:p-6 space-y-4 sm:space-y-6" style={{ WebkitOverflowScrolling: 'touch' }}>
           {/* Data Insights */}
           {insights.length > 0 && (
             <div className="space-y-2">
               {insights.map((insight, i) => (
-                <div key={i} className="flex items-baseline gap-3 px-4 py-2.5 bg-white/[0.02] border border-white/5 rounded-lg">
-                  <span className="text-[9px] font-black text-slate-500 uppercase tracking-widest whitespace-nowrap w-24 flex-shrink-0">{insight.label}</span>
+                <div key={i} className="flex items-baseline gap-2 sm:gap-3 px-3 sm:px-4 py-2 sm:py-2.5 bg-white/[0.02] border border-white/5 rounded-lg">
+                  <span className="text-[9px] font-black text-slate-500 uppercase tracking-widest whitespace-nowrap w-20 sm:w-24 flex-shrink-0">{insight.label}</span>
                   <span className="text-sm font-semibold text-slate-200">{insight.value}</span>
                 </div>
               ))}
@@ -139,7 +139,7 @@ export const GameCardExpanded = ({ game, league = 'nba', onClose }) => {
 
            {/* Betting Data - Enhanced with Implied Probability */}
            {displayOdds && (
-             <div className="bg-white/[0.02] border border-white/5 rounded-xl p-5 space-y-5">
+             <div className="bg-white/[0.02] border border-white/5 rounded-xl p-3 sm:p-5 space-y-3 sm:space-y-5">
                 <div>
                   <h4 className="text-[9px] font-black text-slate-500 uppercase tracking-widest mb-4 flex items-center gap-2">
                     Vegas Lines
@@ -151,7 +151,7 @@ export const GameCardExpanded = ({ game, league = 'nba', onClose }) => {
                   {/* Moneyline with Implied Probability */}
                   <div className="space-y-3">
                     <div className="text-[10px] font-bold text-slate-600 uppercase tracking-wider mb-2">Moneyline (Implied %)</div>
-                    <div className="grid grid-cols-2 gap-3">
+                    <div className="grid grid-cols-1 sm:grid-cols-2 gap-3">
                       {/* Away Team */}
                       <div className="space-y-2">
                         <div className="flex items-baseline justify-between mb-1">
@@ -186,7 +186,7 @@ export const GameCardExpanded = ({ game, league = 'nba', onClose }) => {
                 </div>
 
                 {/* Spread & Total */}
-                <div className="grid grid-cols-2 gap-4 pt-3 border-t border-white/5">
+                <div className="grid grid-cols-2 gap-3 sm:gap-4 pt-3 border-t border-white/5">
                   <div>
                     <span className="text-[8px] font-bold text-slate-600 uppercase tracking-wider block mb-2">Spread</span>
                     <div className="flex items-baseline gap-2">
@@ -219,7 +219,7 @@ export const GameCardExpanded = ({ game, league = 'nba', onClose }) => {
                 {displayOdds.openMoneylineHome != null && displayOdds.openMoneylineHome !== displayOdds.moneylineHome && (
                   <div className="pt-3 border-t border-white/5">
                     <span className="text-[8px] font-bold text-slate-600 uppercase tracking-wider block mb-2">Line Movement</span>
-                    <div className="grid grid-cols-2 gap-3 text-xs tabular-nums">
+                    <div className="grid grid-cols-1 sm:grid-cols-2 gap-2 sm:gap-3 text-xs tabular-nums">
                       <div className="flex items-center gap-2">
                         <span className="text-slate-500">{home.team?.abbreviation} ML:</span>
                         <span className="text-slate-400">{mockOdds.formatOdds(displayOdds.openMoneylineHome)}</span>

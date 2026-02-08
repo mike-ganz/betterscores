@@ -34,7 +34,7 @@ export default function CommandPalette({ isOpen, onClose, onDateChange }) {
   return (
     <div className="fixed inset-0 z-[100] flex items-start justify-center pt-[15vh] px-4 bg-slate-950/40 backdrop-blur-sm" onClick={onClose}>
       <div 
-        className="w-full max-w-lg bg-[#12151c] border border-white/10 rounded-2xl shadow-2xl overflow-hidden animate-in fade-in slide-in-from-top-4 duration-200"
+        className="w-[calc(100vw-2rem)] max-w-lg bg-[#12151c] border border-white/10 rounded-2xl shadow-2xl overflow-hidden animate-in fade-in slide-in-from-top-4 duration-200"
         onClick={e => e.stopPropagation()}
       >
         <div className="flex items-center px-4 py-3 border-b border-white/5">

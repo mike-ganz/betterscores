@@ -8,8 +8,14 @@
 }
 
 html {
-  font-size: 120%;
+  font-size: 100%;
   scroll-behavior: smooth;
+}
+
+@media (min-width: 768px) {
+  html {
+    font-size: 120%;
+  }
 }
 
 body {
